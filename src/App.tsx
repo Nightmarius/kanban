@@ -10,9 +10,7 @@ export function App() {
   const [saveLocationSet, setSaveLocationSet] = useState(false)
 
   const [data, setData] = useState<KanbanData>(store.getState)
-  const [activeBoardId, setActiveBoardId] = useState<string | null>(
-    data.boards[0]?.id ?? null
-  )
+  const [activeBoardId, setActiveBoardId] = useState<string | null>(data.boards[0]?.id ?? null)
 
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
@@ -26,13 +24,18 @@ export function App() {
     timerRef.current = setTimeout(() => {
       writeBoardToDisk(fileHandleRef.current!, formatBoardAsMd(activeBoard))
     }, 2000)
-    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
   }, [activeBoard, autoSaveEnabled])
 
   async function setSaveLocation() {
     try {
       const picker = (window as unknown as Record<string, unknown>).showSaveFilePicker
-      if (!picker) { console.error('File System Access API not supported'); return }
+      if (!picker) {
+        console.error('File System Access API not supported')
+        return
+      }
       const handle = await (picker as Function)({
         suggestedName: 'board.md',
         types: [{ accept: { 'text/markdown': ['.md'] } }],
@@ -56,53 +59,61 @@ export function App() {
   }
 
   return (
-    <div className="main-content">
+    <div className='main-content'>
+      <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} />
       {activeBoard ? (
-          <Board board={activeBoard} onRename={(name: string) => store.renameBoard(activeBoard.id, name)} onDelete={() => store.deleteBoard(activeBoard.id)} onSaveLocation={saveLocationSet ? undefined : setSaveLocation} autoSaveEnabled={autoSaveEnabled && saveLocationSet} />
-        ) : (
-          <EmptyState onImport={handleImport} autoSaveEnabled={autoSaveEnabled && saveLocationSet} />
-        )}
-      </div>
+        <Board
+          board={activeBoard}
+          onRename={(name: string) => store.renameBoard(activeBoard.id, name)}
+          onDelete={() => store.deleteBoard(activeBoard.id)}
+          onSaveLocation={saveLocationSet ? undefined : setSaveLocation}
+          autoSaveEnabled={autoSaveEnabled && saveLocationSet}
+        />
+      ) : (
+        <EmptyState onImport={handleImport} autoSaveEnabled={autoSaveEnabled && saveLocationSet} />
+      )}
+    </div>
   )
 }
 
 function EmptyState({ onImport, autoSaveEnabled }: { onImport: (text: string) => void; autoSaveEnabled?: boolean }) {
   return (
-    <div className="empty-state">
+    <div className='empty-state'>
       <p>No boards loaded.</p>
-      <label className="action-btn" style={{ cursor: 'pointer' }}>
+      <label className='action-btn' style={{ cursor: 'pointer' }}>
         Import .md
-        <input type="file" accept=".md" onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (!file) return
-          const reader = new FileReader()
-          reader.onload = () => onImport(reader.result as string)
-          reader.readAsText(file)
-          e.target.value = ''
-        }} style={{ display: 'none' }} />
+        <input
+          type='file'
+          accept='.md'
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            const reader = new FileReader()
+            reader.onload = () => onImport(reader.result as string)
+            reader.readAsText(file)
+            e.target.value = ''
+          }}
+          style={{ display: 'none' }}
+        />
       </label>
       {autoSaveEnabled && (
-        <span className="autosave-indicator" style={{ marginTop: 4, fontSize: 13 }}>Auto On</span>
+        <span className='autosave-indicator' style={{ marginTop: 4, fontSize: 13 }}>
+          Auto On
+        </span>
       )}
     </div>
   )
 }
 
 function formatBoardAsMd(board: { name: string; columns: Array<{ name: string; items: Array<{ text: string }> }> }): string {
-  return [
-    `# ${board.name}`,
-    '',
-    ...board.columns.map((col) => [
-      `## ${col.name}`,
-      '',
-      ...(col.items.length > 0 ? col.items.map((item) => `- ${item.text}`) : ['(empty)']),
-      '',
-    ]).flat(),
-  ].join('\n')
+  return [`# ${board.name}`, '', ...board.columns.map((col) => [`## ${col.name}`, '', ...(col.items.length > 0 ? col.items.map((item) => `- ${item.text}`) : ['(empty)']), '']).flat()].join('\n')
 }
 
 function writeBoardToDisk(handle: FileSystemFileHandle, content: string) {
-  handle.createWritable().then((writable) => writable.write(content).finally(() => writable.close())).catch(console.error)
+  handle
+    .createWritable()
+    .then((writable) => writable.write(content).finally(() => writable.close()))
+    .catch(console.error)
 }
 
 export function parseBoardFromMd(text: string): KanbanData {
@@ -121,7 +132,10 @@ export function parseBoardFromMd(text: string): KanbanData {
       while (i < lines.length) {
         const next = lines[i].trim()
         if (next.startsWith('# ') || (next.startsWith('## ') && currentBoard!.columns.some((c) => c.name === colName))) break
-        if (next === '' || next === '(empty)' || !next.startsWith('- ')) { i++; continue }
+        if (next === '' || next === '(empty)' || !next.startsWith('- ')) {
+          i++
+          continue
+        }
         items.push({ text: next.slice(2).trim() })
         i++
       }

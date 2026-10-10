@@ -22,7 +22,9 @@ function save() {
 
 export function subscribe(fn: (s: KanbanData) => void) {
   listeners.add(fn)
-  return () => { listeners.delete(fn) }
+  return () => {
+    listeners.delete(fn)
+  }
 }
 
 function notify() {
@@ -43,10 +45,10 @@ export function exportAsJSON(): string {
   return JSON.stringify(state, null, 2)
 }
 
-export function addBoard(name: string): Board {
+export function addBoard(): Board {
   const board: Board = {
     id: 'board-' + Date.now(),
-    name,
+    name: '',
     columns: [
       { id: 'col-' + Date.now() + '-1', name: 'To Do', items: [] },
       { id: 'col-' + Date.now() + '-2', name: 'In Progress', items: [] },
@@ -73,12 +75,12 @@ function findBoard(id: string): Board | undefined {
   return state.boards.find((b) => b.id === id)
 }
 
-export function addColumn(boardId: string, name: string) {
+export function addColumn(boardId: string) {
   const board = findBoard(boardId)
   if (!board) return
   board.columns.push({
     id: 'col-' + Date.now(),
-    name,
+    name: '',
     items: [],
   })
   notify()
@@ -95,7 +97,6 @@ export function renameColumn(boardId: string, colId: string, name: string) {
 export function deleteColumn(boardId: string, colId: string) {
   const board = findBoard(boardId)
   if (!board) return
-  if (board.columns.length <= 1) return
   board.columns = board.columns.filter((c) => c.id !== colId)
   notify()
 }
@@ -118,13 +119,7 @@ function findColumn(boardId: string, colId: string): Column | null {
   return board.columns.find((c) => c.id === colId) || null
 }
 
-export function moveItem(
-  boardId: string,
-  fromColId: string,
-  toColId: string,
-  itemIdx: number,
-  reorderTarget?: number,
-) {
+export function moveItem(boardId: string, fromColId: string, toColId: string, itemIdx: number, reorderTarget?: number) {
   const src = findColumn(boardId, fromColId)
   const dst = findColumn(boardId, toColId)
   if (!src || !dst) return
@@ -152,12 +147,7 @@ export function addItem(boardId: string, colId: string, text: string) {
   notify()
 }
 
-export function updateItem(
-  boardId: string,
-  colId: string,
-  itemIdx: number,
-  text: string,
-) {
+export function updateItem(boardId: string, colId: string, itemIdx: number, text: string) {
   const col = findColumn(boardId, colId)
   if (!col) return
   const item = col.items[itemIdx]
