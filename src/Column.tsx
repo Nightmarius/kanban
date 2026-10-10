@@ -26,7 +26,22 @@ interface ColumnProps {
   onDropCard: (targetColIdx: number, info: { colId: string; itemIdx: number }) => void
 }
 
-export function Column({ column, colIdx, boardId, totalColumns, renamingColumn, setRenamingColumn, draggingCard, dragTargetIdx, isDraggingCol, onDragStart, onDragOver, onDrop, onDragEnd, onDropCard }: ColumnProps) {
+export function Column({
+  column,
+  colIdx,
+  boardId,
+  totalColumns,
+  renamingColumn,
+  setRenamingColumn,
+  draggingCard,
+  dragTargetIdx,
+  isDraggingCol,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onDropCard,
+}: ColumnProps) {
   const [hovered, setHovered] = useState(false)
   const isDragTarget = dragTargetIdx === colIdx
 
@@ -35,7 +50,11 @@ export function Column({ column, colIdx, boardId, totalColumns, renamingColumn, 
     setHovered(false)
     onDragEnd()
     let info: { colId: string; itemIdx: number } | undefined
-    try { info = JSON.parse(e.dataTransfer.getData('text/plain')) } catch { return }
+    try {
+      info = JSON.parse(e.dataTransfer.getData('text/plain'))
+    } catch {
+      return
+    }
     if (!info || !info.colId) return
     onDropCard(colIdx, info)
   }
@@ -48,29 +67,46 @@ export function Column({ column, colIdx, boardId, totalColumns, renamingColumn, 
   }
 
   return (
-    <div className={`column ${isDragTarget ? 'drag-over' : ''} ${isDraggingCol ? 'dragging-col' : ''}`} draggable={!!onDragStart} onDragOver={(e) => {
-      if (!isDraggingCol) return
-      e.preventDefault()
-      e.stopPropagation()
-      onDragOver(colIdx)
-    }} onDrop={(e) => {
-      e.stopPropagation()
-      e.preventDefault()
-      setHovered(false)
-      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'))
-      onDrop(fromIdx, colIdx)
-      onDragEnd()
-    }}>
-      <ColumnHeader column={column} boardId={boardId} totalColumns={totalColumns} renamingColumn={renamingColumn} setRenamingColumn={setRenamingColumn} onColDragStart={isDraggingCol ? undefined : handleColDragStart} />
-
-      <div className='items' onDrop={(e) => {
+    <div
+      className={`column ${isDragTarget ? 'drag-over' : ''} ${isDraggingCol ? 'dragging-col' : ''}`}
+      draggable={!!onDragStart}
+      onDragOver={(e) => {
+        if (!isDraggingCol) return
+        e.preventDefault()
         e.stopPropagation()
-        let info: { colId: string; itemIdx: number } | undefined
-        try { info = JSON.parse(e.dataTransfer.getData('text/plain')) } catch {}
-        if (!info || !info.colId) return
+        onDragOver(colIdx)
+      }}
+      onDrop={(e) => {
+        e.stopPropagation()
+        e.preventDefault()
         setHovered(false)
-        onDropCard(colIdx, info)
-      }}>
+        const fromIdx = parseInt(e.dataTransfer.getData('text/plain'))
+        onDrop(fromIdx, colIdx)
+        onDragEnd()
+      }}
+    >
+      <ColumnHeader
+        column={column}
+        boardId={boardId}
+        totalColumns={totalColumns}
+        renamingColumn={renamingColumn}
+        setRenamingColumn={setRenamingColumn}
+        onColDragStart={isDraggingCol ? undefined : handleColDragStart}
+      />
+
+      <div
+        className='items'
+        onDrop={(e) => {
+          e.stopPropagation()
+          let info: { colId: string; itemIdx: number } | undefined
+          try {
+            info = JSON.parse(e.dataTransfer.getData('text/plain'))
+          } catch {}
+          if (!info || !info.colId) return
+          setHovered(false)
+          onDropCard(colIdx, info)
+        }}
+      >
         {column.items.map((item, itemIdx) => (
           <Card
             key={item.id}
@@ -88,7 +124,14 @@ export function Column({ column, colIdx, boardId, totalColumns, renamingColumn, 
   )
 }
 
-function ColumnHeader({ column, boardId, totalColumns, renamingColumn, setRenamingColumn, onColDragStart }: {
+function ColumnHeader({
+  column,
+  boardId,
+  totalColumns,
+  renamingColumn,
+  setRenamingColumn,
+  onColDragStart,
+}: {
   column: ColumnType
   boardId: string
   totalColumns: number
@@ -99,11 +142,29 @@ function ColumnHeader({ column, boardId, totalColumns, renamingColumn, setRenami
   const [editing, setEditing] = useState(false)
 
   return (
-    <div className='column-header' onDragStart={(e) => { if (onColDragStart) { e.stopPropagation(); onColDragStart(e) } }} style={onColDragStart ? { cursor: 'grab', userSelect: 'none' } : undefined}>
+    <div
+      className='column-header'
+      onDragStart={(e) => {
+        if (onColDragStart) {
+          e.stopPropagation()
+          onColDragStart(e)
+        }
+      }}
+      style={onColDragStart ? { cursor: 'grab', userSelect: 'none' } : undefined}
+    >
       {renamingColumn?.colId === column.id ? (
-        <EditableName value={renamingColumn.name} onSave={(name) => { if (name.trim()) store.renameColumn(boardId, column.id, name.trim()); setRenamingColumn(null) }} onCancel={() => setRenamingColumn(null)} />
+        <EditableName
+          value={renamingColumn.name}
+          onSave={(name) => {
+            if (name.trim()) store.renameColumn(boardId, column.id, name.trim())
+            setRenamingColumn(null)
+          }}
+          onCancel={() => setRenamingColumn(null)}
+        />
       ) : (
-        <span className='column-name' onClick={() => setRenamingColumn({ colId: column.id, name: column.name })}>{column.name}</span>
+        <span className='column-name' onClick={() => setRenamingColumn({ colId: column.id, name: column.name })}>
+          {column.name}
+        </span>
       )}
 
       <DeleteColumnButton columnName={column.name} colId={column.id} boardId={boardId} totalColumns={totalColumns} itemCount={column.items.length} />
@@ -116,24 +177,34 @@ function EditableName({ value, onSave, onCancel }: { value: string; onSave: (nam
   const [draft, setDraft] = useState(value)
 
   return (
-    <input ref={inputRef} className='column-name-input' defaultValue={value} autoFocus onBlur={() => onSave(draft)} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') onSave(draft); if (e.key === 'Escape') onCancel() }} />
+    <input
+      ref={inputRef}
+      className='column-name-input'
+      defaultValue={value}
+      autoFocus
+      onBlur={() => onSave(draft)}
+      onChange={(e) => setDraft(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onSave(draft)
+        if (e.key === 'Escape') onCancel()
+      }}
+    />
   )
 }
 
 function DeleteColumnButton({ columnName, colId, boardId, totalColumns, itemCount }: { columnName: string; colId: string; boardId: string; totalColumns: number; itemCount: number }) {
   function handleDelete() {
-    if (totalColumns > 1) {
-      const shouldConfirm = itemCount > 0
-      let msg = `Delete "${columnName}"?`
-      if (shouldConfirm) msg = `Delete "${columnName}" (${itemCount} item${itemCount === 1 ? '' : 's'})?`
+    const shouldConfirm = itemCount > 0
+    if (shouldConfirm) {
+      const msg = `Delete "${columnName}" and all items inside (This can not be undone)?`
       confirm(msg) && store.deleteColumn(boardId, colId)
     } else {
-      store.addColumnAfter(boardId, colId)
+      store.deleteColumn(boardId, colId)
     }
   }
   return (
-    <button className='btn-icon danger' onClick={handleDelete} title={totalColumns > 1 ? 'Delete column' : 'Insert before'}>
-      {totalColumns > 1 ? '✕' : '+'}
+    <button className='btn-icon danger' onClick={handleDelete} title='Delete column'>
+      ✕
     </button>
   )
 }

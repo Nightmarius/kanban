@@ -10,8 +10,10 @@ function load(): KanbanData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw)
-  } catch { /* ignore */ }
-  return structuredClone(defaultData)
+    return structuredClone(defaultData)
+  } catch {
+    return structuredClone(defaultData)
+  }
 }
 
 function save() {
@@ -28,8 +30,6 @@ function notify() {
   listeners.forEach((fn) => fn(structuredClone(state)))
 }
 
-// ── board actions ──
-
 export function getState(): KanbanData {
   return structuredClone(state)
 }
@@ -43,7 +43,7 @@ export function exportAsJSON(): string {
   return JSON.stringify(state, null, 2)
 }
 
-export function addBoard(name: string) {
+export function addBoard(name: string): Board {
   const board: Board = {
     id: 'board-' + Date.now(),
     name,
@@ -55,6 +55,7 @@ export function addBoard(name: string) {
   }
   state.boards.push(board)
   notify()
+  return board
 }
 
 export function deleteBoard(id: string) {
@@ -67,8 +68,6 @@ export function renameBoard(id: string, name: string) {
   if (board) board.name = name
   notify()
 }
-
-// ── column actions ──
 
 function findBoard(id: string): Board | undefined {
   return state.boards.find((b) => b.id === id)
@@ -96,7 +95,7 @@ export function renameColumn(boardId: string, colId: string, name: string) {
 export function deleteColumn(boardId: string, colId: string) {
   const board = findBoard(boardId)
   if (!board) return
-  if (board.columns.length <= 1) return // at least one column
+  if (board.columns.length <= 1) return
   board.columns = board.columns.filter((c) => c.id !== colId)
   notify()
 }
@@ -112,8 +111,6 @@ export function addColumnAfter(boardId: string, fromColId: string) {
   })
   notify()
 }
-
-// ── item actions ──
 
 function findColumn(boardId: string, colId: string): Column | null {
   const board = findBoard(boardId)
@@ -133,7 +130,6 @@ export function moveItem(
   if (!src || !dst) return
 
   if (src === dst && reorderTarget != null) {
-    // reordering within same column
     const item = src.items[itemIdx]
     if (!item) return
     src.items.splice(itemIdx, 1)

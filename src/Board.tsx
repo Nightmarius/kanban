@@ -1,15 +1,17 @@
 import { useRef, useState, useEffect } from 'react';
 import * as store from './store';
-import type { Board as BoardType, KanbanData } from './types';
+import type { Board as BoardType } from './types';
 import { ColumnList } from './ColumnList';
 
 interface BoardProps {
   board: BoardType;
   onRename: (name: string) => void;
   onDelete: () => void;
+  onSaveLocation?: () => Promise<void>;
+  autoSaveEnabled: boolean;
 }
 
-export function Board({ board, onRename, onDelete }: BoardProps) {
+export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabled }: BoardProps) {
   const [boardNameEdit, setBoardNameEdit] = useState(false);
   const [boardDraftName, setBoardDraftName] = useState(board.name);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,74 +52,19 @@ export function Board({ board, onRename, onDelete }: BoardProps) {
           </span>
         )}
 
-        <ExportButton board={board} />
-        <ImportButton />
+        <AutoSaveIndicator autoSaveEnabled={autoSaveEnabled} />
+        {onSaveLocation && (
+          <button className='btn-export' onClick={() => onSaveLocation()}>
+            Set Save Location
+          </button>
+        )}
         <DeleteButton board={board} onDelete={onDelete} />
       </div>
 
-      <ColumnList boardId={board.id} totalColumns={board.columns.length} />
+      <ColumnList boardId={board.id} />
     </div>
   );
 }
-
-/* ── Export Board (text) ── */
-
-function ExportButton({ board }: { board: BoardType }) {
-  return (
-    <button
-      className='btn-export'
-      onClick={() => {
-        const text = board.columns.map((col) => `## ${col.name}\n${col.items.map((i) => `- ${i.text}`).join('\n') || '(empty)'}`).join('\n\n');
-        downloadFile(`${board.name}.txt`, text, 'text/plain');
-      }}
-    >
-      📤 Export Board
-    </button>
-  );
-}
-
-/* ── Import JSON file ── */
-
-function ImportButton() {
-  return (
-    <label className='btn-export' style={{ cursor: 'pointer' }}>
-      📥 Import JSON
-      <input
-        type='file'
-        accept='.json'
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              store.importFromJSON(JSON.parse(reader.result as string));
-            } catch {
-              alert('Invalid kanban JSON file.');
-            }
-          };
-          reader.readAsText(file);
-          e.target.value = '';
-        }}
-        style={{ display: 'none' }}
-      />
-    </label>
-  );
-}
-
-function downloadFile(filename: string, content: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-/* ── Delete board button ── */
 
 function DeleteButton({ board, onDelete }: { board: BoardType; onDelete: () => void }) {
   const itemTotal = board.columns.reduce((s, c) => s + c.items.length, 0);
@@ -135,4 +82,8 @@ function DeleteButton({ board, onDelete }: { board: BoardType; onDelete: () => v
       ✕
     </button>
   );
+}
+
+function AutoSaveIndicator({ autoSaveEnabled }: { autoSaveEnabled: boolean }) {
+  return <span className='autosave-indicator'>{autoSaveEnabled ? 'Auto On' : null}</span>;
 }

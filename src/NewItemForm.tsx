@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import * as store from './store'
 
 interface NewItemFormProps {
@@ -7,26 +7,29 @@ interface NewItemFormProps {
 }
 
 export function NewItemForm({ boardId, colId }: NewItemFormProps) {
-  const [open, setOpen] = useState(false)
-  const [text, setText] = useState('')
+  const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { if (open && inputRef.current) inputRef.current.focus() }, [open])
-
-  function submit() {
-    if (text.trim()) {
-      store.addItem(boardId, colId, text.trim())
-      setText('')
-    }
-    setOpen(false)
+  if (editing) {
+    return (
+      <div className="add-item-form">
+        <input
+          ref={inputRef}
+          className="add-item-input"
+          placeholder="Item name..."
+          autoFocus
+          onBlur={(e) => {
+            if (e.currentTarget.value.trim()) store.addItem(boardId, colId, e.currentTarget.value.trim())
+            setEditing(false)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') store.addItem(boardId, colId, (e.target as HTMLInputElement).value.trim())
+            if (e.key === 'Escape') setEditing(false)
+          }}
+        />
+      </div>
+    )
   }
 
-  if (!open) return <button className="btn-add-item" onClick={() => setOpen(true)}>+ Add item</button>
-
-  return (
-    <div className="add-item-form">
-      <input ref={inputRef} className="add-item-input" placeholder="Enter item..." value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setOpen(false) }} />
-      <button className="btn-add-item" onClick={submit}>Add</button>
-    </div>
-  )
+  return <button className="btn-add-item" onClick={() => setEditing(true)}>+ Add item</button>
 }
