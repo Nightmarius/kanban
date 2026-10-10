@@ -30,7 +30,7 @@ export function ColumnList({ boardId }: ColumnListProps) {
   }
 
   return (
-    <div className="track">
+    <div className='track'>
       {board.columns.map((col, colIdx) => (
         <Column
           key={col.id}
@@ -44,7 +44,9 @@ export function ColumnList({ boardId }: ColumnListProps) {
           dragTargetIdx={dragTargetColIdx}
           isDraggingCol={isDraggingCol}
           onDragStart={() => setIsDraggingCol(true)}
-          onDragOver={(targetIdx) => { if (dragTargetColIdx !== null && targetIdx !== dragTargetColIdx) setDragTargetColIdx(targetIdx) }}
+          onDragOver={(targetIdx) => {
+            if (dragTargetColIdx !== null && targetIdx !== dragTargetColIdx) setDragTargetColIdx(targetIdx)
+          }}
           onDrop={(fromIdx, toIdx) => handleColReorder(fromIdx, toIdx)}
           onDragEnd={() => setIsDraggingCol(false)}
           onDropCard={(targetColIdx, info) => {
@@ -57,7 +59,9 @@ export function ColumnList({ boardId }: ColumnListProps) {
         />
       ))}
 
-      <button className="btn-add-col" onClick={() => store.addColumn(boardId, 'New Column')}>+ Column</button>
+      <button className='btn-add-col' onClick={() => store.addColumn(boardId)}>
+        + Column
+      </button>
     </div>
   )
 }

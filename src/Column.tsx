@@ -167,7 +167,7 @@ function ColumnHeader({
         </span>
       )}
 
-      <DeleteColumnButton columnName={column.name} colId={column.id} boardId={boardId} totalColumns={totalColumns} itemCount={column.items.length} />
+      <DeleteColumnButton columnName={column.name} colId={column.id} boardId={boardId} itemCount={column.items.length} />
     </div>
   )
 }
@@ -192,7 +192,7 @@ function EditableName({ value, onSave, onCancel }: { value: string; onSave: (nam
   )
 }
 
-function DeleteColumnButton({ columnName, colId, boardId, totalColumns, itemCount }: { columnName: string; colId: string; boardId: string; totalColumns: number; itemCount: number }) {
+function DeleteColumnButton({ columnName, colId, boardId, itemCount }: { columnName: string; colId: string; boardId: string; itemCount: number }) {
   function handleDelete() {
     const shouldConfirm = itemCount > 0
     if (shouldConfirm) {

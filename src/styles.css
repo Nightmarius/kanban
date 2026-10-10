@@ -1,5 +1,3 @@
-/* ── Red color theme ── */
-
 :root {
   --bg: #fef2f2;
   --sidebar-bg: #7f1d1d;
@@ -52,12 +50,8 @@ body {
   height: 100vh;
 }
 
-/* ── Hamburger button ── */
-
 .hamburger-btn {
-  position: fixed;
-  top: 8px;
-  left: 8px;
+  margin: 8px;
   z-index: 50;
   width: 36px;
   height: 36px;
@@ -75,14 +69,11 @@ body {
   background: var(--accent-hover);
 }
 
-/* ── Board overlay panel ── */
-
 .board-overlay {
   position: fixed;
   top: 48px;
   left: 8px;
   z-index: 100;
-  padding-top: calc(100vh - 64px);
 }
 
 .board-panel {
@@ -162,8 +153,6 @@ body {
   color: #fff;
 }
 
-/* ── Main content ── */
-
 .main-content {
   flex: 1;
   overflow: hidden;
@@ -180,8 +169,6 @@ body {
   color: var(--text-muted);
   font-size: 18px;
 }
-
-/* ── Board title bar ── */
 
 .board-title-bar {
   display: flex;
@@ -231,8 +218,6 @@ body {
   color: var(--accent);
 }
 
-/* ── Columns track ── */
-
 .track {
   flex: 1;
   display: flex;
@@ -241,8 +226,6 @@ body {
   padding: 0 8px 16px;
   align-items: flex-start;
 }
-
-/* ── Column ── */
 
 .column {
   background: var(--col-bg);
@@ -303,8 +286,6 @@ body {
   outline: none;
 }
 
-/* ── Buttons & Icons ── */
-
 .btn-icon {
   width: 28px;
   height: 28px;
@@ -344,8 +325,6 @@ body {
   border-color: var(--accent);
   color: var(--accent);
 }
-
-/* ── Items list ── */
 
 .items {
   padding: 8px;
@@ -428,8 +407,6 @@ body {
   color: #fff;
 }
 
-/* ── Add Item Form ── */
-
 .btn-add-item {
   padding: 8px 16px;
   border-radius: 6px;
@@ -465,8 +442,6 @@ body {
   outline: none;
   border-color: var(--accent);
 }
-
-/* ── Modal ── */
 
 .modal-overlay {
   position: fixed;
@@ -542,8 +517,6 @@ body {
   background: var(--bg);
 }
 
-/* ── Scrollbars ── */
-
 .track::-webkit-scrollbar,
 .board-panel ul::-webkit-scrollbar {
   height: 6px;
@@ -560,8 +533,6 @@ body {
   background: var(--border);
   border-radius: 3px;
 }
-
-/* ── Responsive ── */
 
 @media (max-width: 640px) {
   .main-content {
