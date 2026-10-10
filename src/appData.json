@@ -1,0 +1,13 @@
+{
+  "boards": [
+    {
+      "id": "board-1",
+      "name": "My First Board",
+      "columns": [
+        { "id": "col-todo", "name": "To Do", "items": [{ "id": "item-1", "text": "Plan the project" }] },
+        { "id": "col-doing", "name": "Doing", "items": [] },
+        { "id": "col-done", "name": "Done", "items": [] }
+      ]
+    }
+  ]
+}
