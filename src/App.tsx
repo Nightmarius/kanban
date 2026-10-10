@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import * as store from './store'
-import type { KanbanData, Board as BoardDef } from './types'
+import type { KanbanData } from './types'
 import { BoardPicker } from './BoardPicker'
 import { NewBoardModal } from './NewBoardModal'
 import { Board } from './Board'
@@ -17,17 +17,8 @@ export function App() {
 
   const activeBoard = data.boards.find((b) => b.id === activeBoardId) ?? null
 
-  function handleDeleteBoard(board: BoardDef) {
-    const totalItems = board.columns.reduce((s, c) => s + c.items.length, 0)
-    let msg: string
-    if (totalItems > 0) {
-      msg = `Delete "${board.name}" (${board.columns.length} columns, ${totalItems} items)?`
-    } else if (board.columns.length === 1) {
-      msg = 'Delete this board and its only column?'
-    } else {
-      msg = `Delete "${board.name}" (${board.columns.length} columns)?`
-    }
-    confirm(msg) && store.deleteBoard(board.id)
+  function handleDelete() {
+    if (activeBoard) store.deleteBoard(activeBoard.id)
   }
 
   return (
@@ -43,7 +34,7 @@ export function App() {
 
       <main className="main-content">
         {activeBoard ? (
-          <Board board={activeBoard} onRename={(name) => store.renameBoard(activeBoard.id, name)} onDelete={() => handleDeleteBoard(activeBoard)} />
+          <Board board={activeBoard} onRename={(name: string) => store.renameBoard(activeBoard.id, name)} onDelete={handleDelete} />
         ) : (
           <div className="empty-state">
             <p>No boards yet. Open the menu in the top-left to create one!</p>
