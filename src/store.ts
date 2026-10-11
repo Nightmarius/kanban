@@ -101,15 +101,12 @@ export function deleteColumn(boardId: string, colId: string) {
   notify()
 }
 
-export function addColumnAfter(boardId: string, fromColId: string) {
+export function moveColumn(boardId: string, fromIdx: number, toIdx: number) {
   const board = findBoard(boardId)
-  if (!board) return
-  const idx = board.columns.findIndex((c) => c.id === fromColId)
-  board.columns.splice(idx + 1, 0, {
-    id: 'col-' + Date.now(),
-    name: 'New Column',
-    items: [],
-  })
+  if (!board || toIdx < 0 || toIdx >= board.columns.length) return
+  const column = board.columns[fromIdx]
+  board.columns.splice(fromIdx, 1)
+  board.columns.splice(toIdx, 0, column)
   notify()
 }
 

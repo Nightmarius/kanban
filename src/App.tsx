@@ -59,7 +59,7 @@ export function App() {
   }
 
   return (
-    <div className='main-content'>
+    <div className='main-content bg-bg'>
       <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} />
       {activeBoard ? (
         <Board
@@ -79,8 +79,8 @@ export function App() {
 function EmptyState({ onImport, autoSaveEnabled }: { onImport: (text: string) => void; autoSaveEnabled?: boolean }) {
   return (
     <div className='empty-state'>
-      <p>No boards loaded.</p>
-      <label className='action-btn' style={{ cursor: 'pointer' }}>
+      <p className='text-text'>No boards loaded.</p>
+      <label className='action-btn bg-card text-text cursor-pointer'>
         Import .md
         <input
           type='file'
@@ -93,11 +93,11 @@ function EmptyState({ onImport, autoSaveEnabled }: { onImport: (text: string) =>
             reader.readAsText(file)
             e.target.value = ''
           }}
-          style={{ display: 'none' }}
+          className='hidden'
         />
       </label>
       {autoSaveEnabled && (
-        <span className='autosave-indicator' style={{ marginTop: 4, fontSize: 13 }}>
+        <span className='autosave-indicator mt-1 text-[13px] text-accent'>
           Auto On
         </span>
       )}
