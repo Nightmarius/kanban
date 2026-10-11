@@ -18,50 +18,14 @@ export function ColumnList({ boardId }: { boardId: string }) {
     store.moveColumn(boardId, fromIdx, toIdx)
   }
 
-  function onDropCard(sourceColId: string, targetColIdx: number) {
+  function onDropCard(sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) {
     if (!dragDataRef.current) return
 
-    const sourceCol = board.columns.find((c) => c.id === dragDataRef.current!.colId)
-    if (!sourceCol) return
+    const dragData = dragDataRef.current
+    const sourceColIdActual = dragData.colId
+    const itemIdx = dragData.itemIdx
 
-    const freshState = store.getState()
-    let freshBoard: typeof board | null = null
-    for (const b of freshState.boards) {
-      if (b.id === boardId) {
-        freshBoard = b as any
-        break
-      }
-    }
-    if (!freshBoard) return
-
-    const targetCol = freshBoard.columns[targetColIdx]
-    if (!targetCol) return
-
-    let freshSourceCol: typeof sourceCol | null = null
-    for (const col of freshBoard.columns) {
-      for (let i = 0; i < col.items.length; i++) {
-        if (col.items[i].id === dragDataRef.current!.cardId) {
-          freshSourceCol = col as any
-          break
-        }
-      }
-      if (freshSourceCol) break
-    }
-    if (!freshSourceCol) return
-
-    let sourceItemIdx: number = -1
-    for (let i = 0; i < freshSourceCol.items.length; i++) {
-      if (freshSourceCol.items[i].id === dragDataRef.current!.cardId) {
-        sourceItemIdx = i
-        break
-      }
-    }
-    if (sourceItemIdx === -1) return
-
-    const cardText = freshSourceCol.items[sourceItemIdx].text
-
-    store.deleteItem(boardId, freshSourceCol.id, sourceItemIdx)
-    store.addItem(boardId, targetCol.id, cardText)
+    store.moveItem(boardId, sourceColIdActual, board.columns[targetColIdx].id, itemIdx, dropAboveItemIdx ?? undefined)
 
     setIsDraggingCard(false)
     setDropAboveItemIdx(null)
@@ -80,11 +44,11 @@ export function ColumnList({ boardId }: { boardId: string }) {
           isDraggingCard={isDraggingCard}
           dragColId={dragColId}
           dragDataRef={dragDataRef}
-          dragTargetIdx={dragTargetColIdx}
+          dragTargetColIdx={dragTargetColIdx}
           isDraggingCol={isDraggingCol}
           dropAboveItemIdx={dropAboveItemIdx}
           onDropTargetChange={(idx) => setDropAboveItemIdx(idx)}
-          onStartDrag={() => {}}
+          onStartDrag={() => setIsDraggingCard(true)}
           onColumnDragStart={() => setIsDraggingCol(true)}
           onDragOver={(targetIdx) => {
             if (dragTargetColIdx !== null && targetIdx !== dragTargetColIdx) setDragTargetColIdx(targetIdx)
