@@ -123,7 +123,7 @@ export function moveItem(boardId: string, fromColId: string, toColId: string, it
 
   const item = src.items[itemIdx]
   if (!item) return
-  
+
   if (src === dst && reorderTargetIndex != null) {
     // Within same column - remove from old position and re-insert at new
     src.items.splice(itemIdx, 1)
@@ -135,7 +135,7 @@ export function moveItem(boardId: string, fromColId: string, toColId: string, it
 
   // Cross-column move
   src.items.splice(itemIdx, 1)
-  
+
   if (reorderTargetIndex != null && reorderTargetIndex > 0) {
     const insertAt = Math.min(reorderTargetIndex - 1, dst.items.length)
     dst.items.splice(insertAt, 0, item)
@@ -145,10 +145,10 @@ export function moveItem(boardId: string, fromColId: string, toColId: string, it
   notify()
 }
 
-export function addItem(boardId: string, colId: string, text: string) {
+export function addItem(boardId: string, colId: string) {
   const col = findColumn(boardId, colId)
   if (!col) return
-  col.items.push({ id: 'item-' + Date.now(), text })
+  col.items.push({ id: 'item-' + Date.now(), text: '' })
   notify()
 }
 
