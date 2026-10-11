@@ -50,18 +50,11 @@ export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabl
   return (
     <div className='flex flex-col h-full'>
       <div className='flex items-center gap-2 p-3 mb-4 border-b-2 border-card'>
-        <EditableText
-          value={board.name}
-          onSave={(name) => onRename(name)}
-          className='text-2xl font-bold px-2 py-1 rounded bg-transparent text-text flex-1 cursor-text focus:border-accent focus:bg-card outline-none'
-        />
+        <EditableText value={board.name} onSave={(name) => onRename(name)} className='text-2xl font-bold px-2 py-1 focus:bg-card' />
 
         <AutoSaveIndicator autoSaveEnabled={autoSaveEnabled} />
         {onSaveLocation && (
-          <button
-            className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent'
-            onClick={() => onSaveLocation()}
-          >
+          <button className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent' onClick={() => onSaveLocation()}>
             Save File Location
           </button>
         )}

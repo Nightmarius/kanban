@@ -34,7 +34,7 @@ export function Item({ item, itemIdx, boardId, colId, isDragging, dropAbove, onS
 
   return (
     <div
-      className={`cursor-grab rounded-sm bg-item p-2 text-sm leading-relaxed flex items-start 
+      className={`cursor-grab rounded-sm bg-item p-3 text-sm leading-relaxed flex items-start 
         gap-2 select-none drop-target ${isDragging ? 'scale-95 rotate-2 bg-green-500' : ''} ${dropAbove ? 'border-t-2 border-accent' : ''}`}
       draggable
       onDragStart={handleDragStart}
@@ -44,10 +44,9 @@ export function Item({ item, itemIdx, boardId, colId, isDragging, dropAbove, onS
         onSave={(text) => {
           if (text.trim()) store.updateItem(boardId, colId, itemIdx, text)
         }}
-        className='flex-1 px-0.5 py-0 text-sm text-text bg-transparent outline-none resize-none word-break-break-word min-h-[1.5em]'
-        inputType='textarea'
+        className='text-sm word-break-break-word'
       />
-      <div className='flex gap-x-0.5 item-actions'>
+      <div className='flex gap-x-0.5'>
         <button className='text-text cursor-pointer size-6' onClick={() => store.deleteItem(boardId, colId, itemIdx)} title='Delete'>
           ✕
         </button>
