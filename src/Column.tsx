@@ -16,14 +16,19 @@ interface ColumnProps {
   totalColumns: number
   renamingColumn: RenameTarget | null
   setRenamingColumn: (r: RenameTarget | null) => void
-  draggingCard: { boardId: string; colId: string; itemIdx: number } | null
+  isDraggingCard: boolean
+  dragColId: string | null
+  dragDataRef: React.MutableRefObject<{ colId: string; itemIdx: number; cardId: string; text: string } | null>
   dragTargetIdx: number | null
   isDraggingCol: boolean
-  onDragStart: () => void
+  dropAboveItemIdx: number | null
+  onDropTargetChange: (idx: number | null) => void
+  onStartDrag: () => void
+  onColumnDragStart: () => void
   onDragOver: (targetIdx: number) => void
-  onDrop: (fromIdx: number, toIdx: number) => void
+  onDropColumn: (fromIdx: number, toIdx: number) => void
   onDragEnd: () => void
-  onDropCard: (targetColIdx: number, info: { colId: string; itemIdx: number }) => void
+  onDropCard: (sourceColId: string, targetColIdx: number) => void
 }
 
 export function Column({
@@ -33,57 +38,73 @@ export function Column({
   totalColumns,
   renamingColumn,
   setRenamingColumn,
-  draggingCard,
+  isDraggingCard,
+  dragColId,
+  dragDataRef,
   dragTargetIdx,
   isDraggingCol,
-  onDragStart,
+  dropAboveItemIdx,
+  onDropTargetChange,
+  onStartDrag,
+  onColumnDragStart,
   onDragOver,
-  onDrop,
+  onDropColumn,
   onDragEnd,
   onDropCard,
 }: ColumnProps) {
   const [hovered, setHovered] = useState(false)
   const isDragTarget = dragTargetIdx === colIdx
 
+  function handleCardDragOver(e: React.DragEvent<HTMLDivElement>) {
+    if (!isDraggingCard) return
+    e.preventDefault()
+
+    const targetEl = e.currentTarget as HTMLElement
+    const cards = [...targetEl.querySelectorAll('.card:not(.dragging)')] as HTMLElement[]
+    let foundIndex: number | null = null
+
+    for (let i = 0; i < cards.length; i++) {
+      const rect = cards[i].getBoundingClientRect()
+      const midY = rect.top + rect.height / 2
+      if (e.clientY < midY) {
+        foundIndex = i
+        break
+      }
+    }
+
+    onDropTargetChange(foundIndex)
+  }
+
   function handleCardDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
     e.stopPropagation()
     setHovered(false)
     onDragEnd()
-    let info: { colId: string; itemIdx: number } | undefined
-    try {
-      info = JSON.parse(e.dataTransfer.getData('text/plain'))
-    } catch {
-      return
-    }
-    if (!info || !info.colId) return
-    onDropCard(colIdx, info)
+    onDropTargetChange(null)
+
+    const sourceColId = dragDataRef.current?.colId
+    if (!sourceColId) return
+    onDropCard(sourceColId, colIdx)
+  }
+
+  function handleColDragOver(e: React.DragEvent<HTMLDivElement>) {
+    if (!isDraggingCol) return
+    e.preventDefault()
+    e.stopPropagation()
+    onDragOver(colIdx)
   }
 
   function handleColDragStart(e: React.DragEvent<HTMLDivElement>) {
     e.stopPropagation()
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', String(colIdx))
-    onDragStart()
+    onColumnDragStart()
   }
 
   return (
     <div
-      className={`column ${isDragTarget ? 'drag-over' : ''} ${isDraggingCol ? 'dragging-col' : ''}`}
-      draggable={!!onDragStart}
-      onDragOver={(e) => {
-        if (!isDraggingCol) return
-        e.preventDefault()
-        e.stopPropagation()
-        onDragOver(colIdx)
-      }}
-      onDrop={(e) => {
-        e.stopPropagation()
-        e.preventDefault()
-        setHovered(false)
-        const fromIdx = parseInt(e.dataTransfer.getData('text/plain'))
-        onDrop(fromIdx, colIdx)
-        onDragEnd()
-      }}
+      className={`bg-card rounded-lg flex-1 flex flex-col min-w-70 max-w-85  ${isDragTarget ? 'border border-accent' : ''} ${isDraggingCol || isDraggingCard ? 'scale-95' : ''}`}
+      onDragOver={handleColDragOver}
     >
       <ColumnHeader
         column={column}
@@ -94,19 +115,7 @@ export function Column({
         onColDragStart={isDraggingCol ? undefined : handleColDragStart}
       />
 
-      <div
-        className='items'
-        onDrop={(e) => {
-          e.stopPropagation()
-          let info: { colId: string; itemIdx: number } | undefined
-          try {
-            info = JSON.parse(e.dataTransfer.getData('text/plain'))
-          } catch {}
-          if (!info || !info.colId) return
-          setHovered(false)
-          onDropCard(colIdx, info)
-        }}
-      >
+      <div className='flex-1 overflow-y-auto p-2 min-h-10 flex flex-col gap-1.5' onDrop={handleCardDrop as any} onDragOver={handleCardDragOver}>
         {column.items.map((item, itemIdx) => (
           <Card
             key={item.id}
@@ -114,7 +123,9 @@ export function Column({
             itemIdx={itemIdx}
             boardId={boardId}
             colId={column.id}
-            dragging={draggingCard !== null && draggingCard.colId === column.id && draggingCard.itemIdx === itemIdx}
+            isDragging={isDraggingCard && dragColId === column.id}
+            dropAbove={dropAboveItemIdx === itemIdx}
+            onStartDrag={onStartDrag}
           />
         ))}
 
@@ -143,14 +154,13 @@ function ColumnHeader({
 
   return (
     <div
-      className='column-header'
+      className={`flex items-center justify-between p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item ${onColDragStart ? 'cursor-grab select-none' : ''}`}
       onDragStart={(e) => {
         if (onColDragStart) {
           e.stopPropagation()
           onColDragStart(e)
         }
       }}
-      style={onColDragStart ? { cursor: 'grab', userSelect: 'none' } : undefined}
     >
       {renamingColumn?.colId === column.id ? (
         <EditableName
@@ -162,7 +172,7 @@ function ColumnHeader({
           onCancel={() => setRenamingColumn(null)}
         />
       ) : (
-        <span className='column-name' onClick={() => setRenamingColumn({ colId: column.id, name: column.name })}>
+        <span className='text-text font-semibold text-base' onClick={() => setRenamingColumn({ colId: column.id, name: column.name })}>
           {column.name}
         </span>
       )}
@@ -203,7 +213,7 @@ function DeleteColumnButton({ columnName, colId, boardId, itemCount }: { columnN
     }
   }
   return (
-    <button className='btn-icon danger' onClick={handleDelete} title='Delete column'>
+    <button className='text-text cursor-pointer' onClick={handleDelete} title='Delete column'>
       ✕
     </button>
   )

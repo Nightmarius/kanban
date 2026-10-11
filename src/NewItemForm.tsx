@@ -12,10 +12,10 @@ export function NewItemForm({ boardId, colId }: NewItemFormProps) {
 
   if (editing) {
     return (
-      <div className="add-item-form">
+      <div className="flex gap-1.5 py-1">
         <input
           ref={inputRef}
-          className="add-item-input"
+           className="flex-1 px-2 py-2 rounded border border-white/10 bg-card text-text text-sm focus:border-accent outline-none placeholder:text-text/40"
           placeholder="Item name..."
           autoFocus
           onBlur={(e) => {
@@ -31,5 +31,5 @@ export function NewItemForm({ boardId, colId }: NewItemFormProps) {
     )
   }
 
-  return <button className="btn-add-item" onClick={() => setEditing(true)}>+ Add item</button>
+  return <button className="px-4 py-2 rounded border-none bg-accent text-white cursor-pointer text-[13px] font-medium hover:bg-hover transition-colors" onClick={() => setEditing(true)}>+ Add item</button>
 }

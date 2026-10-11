@@ -28,12 +28,12 @@ export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabl
   }
 
   return (
-    <div className='board-area'>
-      <div className='board-title-bar'>
+    <div className='flex flex-col h-full'>
+      <div className='flex items-center gap-2 p-3 mb-4 border-b-2 border-card'>
         {boardNameEdit ? (
           <input
             ref={inputRef}
-            className='board-title'
+            className='text-2xl font-bold px-2 py-1 rounded border border-transparent bg-transparent text-text flex-1 cursor-text focus:border-accent focus:bg-card outline-none'
             value={boardDraftName}
             onChange={(e) => setBoardDraftName(e.target.value)}
             onBlur={commitRename}
@@ -46,14 +46,17 @@ export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabl
             }}
           />
         ) : (
-          <span className='board-title' onDoubleClick={() => setBoardNameEdit(true)}>
+          <span
+            className='text-2xl font-bold px-2 py-1 rounded bg-transparent text-text flex-1 cursor-text focus:border-accent focus:bg-card outline-none'
+            onDoubleClick={() => setBoardNameEdit(true)}
+          >
             {board.name}
           </span>
         )}
 
         <AutoSaveIndicator autoSaveEnabled={autoSaveEnabled} />
         {onSaveLocation && (
-          <button className='btn-export' onClick={() => onSaveLocation()}>
+          <button className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent' onClick={() => onSaveLocation()}>
             Set Save Location
           </button>
         )}
@@ -77,12 +80,16 @@ function DeleteButton({ board, onDelete }: { board: BoardType; onDelete: () => v
   }
 
   return (
-    <button className='btn-icon' onClick={handleDelete} title='Delete board'>
+    <button
+      className='w-7 h-7 flex items-center justify-center border-none bg-transparent text-text cursor-pointer rounded text-base hover:bg-card hover:text-accent'
+      onClick={handleDelete}
+      title='Delete board'
+    >
       ✕
     </button>
   )
 }
 
 function AutoSaveIndicator({ autoSaveEnabled }: { autoSaveEnabled: boolean }) {
-  return <span className='autosave-indicator'>{autoSaveEnabled ? 'Auto On' : null}</span>
+  return <span className='text-sm px-2 text-accent'>{autoSaveEnabled ? 'Auto On' : null}</span>
 }

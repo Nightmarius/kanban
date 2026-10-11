@@ -21,8 +21,8 @@ export function DeleteModal({ open, onClose, onCreate }: NewBoardModalProps) {
   if (!open) return null
 
   return (
-    <div className='modal-overlay' onClick={onClose}>
-      <div className='modal' onClick={(e) => e.stopPropagation()}>
+    <div className='fixed inset-0 bg-black/40 flex items-center justify-center z-100' onClick={onClose}>
+      <div className='bg-card rounded-lg p-6 shadow-[0_4px_12px_rgba(0,0,0,0.3)] min-w-[360px] text-text' onClick={(e) => e.stopPropagation()}>
         <h2>Create New Board</h2>
         <input
           ref={inputRef}
@@ -34,11 +34,11 @@ export function DeleteModal({ open, onClose, onCreate }: NewBoardModalProps) {
             if (e.key === 'Escape') onClose()
           }}
         />
-        <div className='modal-buttons'>
-          <button className='btn-cancel' onClick={onClose}>
+        <div className='flex gap-2 mt-4'>
+          <button className='px-5 py-2 rounded border border-white/10 bg-transparent text-text cursor-pointer text-sm hover:bg-bg transition-colors' onClick={onClose}>
             Cancel
           </button>
-          <button className='btn-primary' onClick={submit}>
+          <button className='px-5 py-2 rounded border-none bg-accent text-white cursor-pointer text-sm font-medium hover:bg-hover transition-colors' onClick={submit}>
             Create
           </button>
         </div>
