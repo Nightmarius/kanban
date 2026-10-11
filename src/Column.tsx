@@ -13,16 +13,16 @@ interface ColumnProps {
   isDraggingCard: boolean
   dragColId: string | null
   dragDataRef: React.MutableRefObject<{ colId: string; itemIdx: number; cardId: string; text: string } | null>
-  dragTargetIdx: number | null
   isDraggingCol: boolean
   dropAboveItemIdx: number | null
+  dragTargetColIdx: number | null
   onDropTargetChange: (idx: number | null) => void
   onStartDrag: () => void
   onColumnDragStart: () => void
   onDragOver: (targetIdx: number) => void
   onDropColumn: (fromIdx: number, toIdx: number) => void
   onDragEnd: () => void
-  onDropCard: (sourceColId: string, targetColIdx: number) => void
+  onDropCard: (sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) => void
 }
 
 export function Column({
@@ -33,9 +33,9 @@ export function Column({
   isDraggingCard,
   dragColId,
   dragDataRef,
-  dragTargetIdx,
   isDraggingCol,
   dropAboveItemIdx,
+  dragTargetColIdx,
   onDropTargetChange,
   onStartDrag,
   onColumnDragStart,
@@ -44,15 +44,13 @@ export function Column({
   onDragEnd,
   onDropCard,
 }: ColumnProps) {
-  const [hovered, setHovered] = useState(false)
-  const isDragTarget = dragTargetIdx === colIdx
+  const isDragTarget = dragTargetColIdx === colIdx
 
   function handleCardDragOver(e: React.DragEvent<HTMLDivElement>) {
-    if (!isDraggingCard) return
     e.preventDefault()
 
     const targetEl = e.currentTarget as HTMLElement
-    const cards = [...targetEl.querySelectorAll('.card:not(.dragging)')] as HTMLElement[]
+    const cards = [...targetEl.querySelectorAll('.drop-target')].filter((el) => !el.classList.contains('dragging')) as HTMLElement[]
     let foundIndex: number | null = null
 
     for (let i = 0; i < cards.length; i++) {
@@ -70,13 +68,15 @@ export function Column({
   function handleCardDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
     e.stopPropagation()
-    setHovered(false)
+
+    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'))
+    if (dragData.cardId) {
+      dragDataRef.current = { cardId: dragData.cardId, colId: dragData.colId, itemIdx: dragData.itemIdx, text: dragData.text }
+      onDropCard(dragData.colId, colIdx, dropAboveItemIdx)
+    }
+
     onDragEnd()
     onDropTargetChange(null)
-
-    const sourceColId = dragDataRef.current?.colId
-    if (!sourceColId) return
-    onDropCard(sourceColId, colIdx)
   }
 
   function handleColDragOver(e: React.DragEvent<HTMLDivElement>) {
@@ -86,23 +86,16 @@ export function Column({
     onDragOver(colIdx)
   }
 
-  function handleColDragStart(e: React.DragEvent<HTMLDivElement>) {
-    e.stopPropagation()
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', String(colIdx))
-    onColumnDragStart()
-  }
-
   return (
-    <div
-      className={`bg-card rounded-lg flex-1 flex flex-col min-w-70 max-w-85  ${isDragTarget ? 'border border-accent' : ''} ${isDraggingCol || isDraggingCard ? 'scale-95' : ''}`}
-      onDragOver={handleColDragOver}
-    >
+    <div className={`bg-card rounded-lg flex-1 flex flex-col min-w-70 max-w-85 ${isDraggingCol ? 'cursor-grabbing' : ''} ${isDragTarget ? 'border border-accent' : ''}`} onDragOver={handleColDragOver}>
       <div
-        className='flex items-center justify-between p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab select-none'
+        draggable={!isDraggingCard}
+        className='flex items-center justify-between p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab select-none active:cursor-grabbing'
         onDragStart={(e) => {
           e.stopPropagation()
-          handleColDragStart(e as any)
+          e.dataTransfer.effectAllowed = 'move'
+          e.dataTransfer.setData('text/plain', String(colIdx))
+          isDraggingCol || onColumnDragStart()
         }}
       >
         <EditableText
@@ -110,7 +103,7 @@ export function Column({
           onSave={(name) => {
             if (name.trim()) store.renameColumn(boardId, column.id, name.trim())
           }}
-          className="text-text font-semibold text-base w-full"
+          className='text-text font-semibold text-base w-full'
         />
 
         <button
@@ -130,7 +123,7 @@ export function Column({
         </button>
       </div>
 
-      <div className='flex-1 overflow-y-auto p-2 min-h-10 flex flex-col gap-1.5' onDrop={handleCardDrop as any} onDragOver={handleCardDragOver}>
+      <div className='flex-1 overflow-y-auto p-2 min-h-10 flex flex-col gap-1.5' onDrop={handleCardDrop} onDragOver={handleCardDragOver}>
         {column.items.map((item, itemIdx) => (
           <Item
             key={item.id}

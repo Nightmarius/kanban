@@ -116,24 +116,32 @@ function findColumn(boardId: string, colId: string): Column | null {
   return board.columns.find((c) => c.id === colId) || null
 }
 
-export function moveItem(boardId: string, fromColId: string, toColId: string, itemIdx: number, reorderTarget?: number) {
+export function moveItem(boardId: string, fromColId: string, toColId: string, itemIdx: number, reorderTargetIndex?: number) {
   const src = findColumn(boardId, fromColId)
   const dst = findColumn(boardId, toColId)
   if (!src || !dst) return
 
-  if (src === dst && reorderTarget != null) {
-    const item = src.items[itemIdx]
-    if (!item) return
+  const item = src.items[itemIdx]
+  if (!item) return
+  
+  if (src === dst && reorderTargetIndex != null) {
+    // Within same column - remove from old position and re-insert at new
     src.items.splice(itemIdx, 1)
-    dst.items.splice(reorderTarget, 0, item)
+    const insertAt = Math.min(reorderTargetIndex, src.items.length)
+    src.items.splice(insertAt, 0, item)
     notify()
     return
   }
 
-  const item = src.items[itemIdx]
-  if (!item) return
+  // Cross-column move
   src.items.splice(itemIdx, 1)
-  dst.items.push(item)
+  
+  if (reorderTargetIndex != null && reorderTargetIndex > 0) {
+    const insertAt = Math.min(reorderTargetIndex - 1, dst.items.length)
+    dst.items.splice(insertAt, 0, item)
+  } else {
+    dst.items.push(item)
+  }
   notify()
 }
 
