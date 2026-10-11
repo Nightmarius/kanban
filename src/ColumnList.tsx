@@ -2,11 +2,6 @@ import { useState, useRef } from 'react'
 import * as store from './store'
 import { Column } from './Column'
 
-interface RenameTarget {
-  colId: string
-  name: string
-}
-
 export function ColumnList({ boardId }: { boardId: string }) {
   const [isDraggingCard, setIsDraggingCard] = useState(false)
   const [dragColId, setDragColId] = useState<string | null>(null)
@@ -14,11 +9,8 @@ export function ColumnList({ boardId }: { boardId: string }) {
   const [dropAboveItemIdx, setDropAboveItemIdx] = useState<number | null>(null)
   const [dragTargetColIdx, setDragTargetColIdx] = useState<number | null>(null)
   const [isDraggingCol, setIsDraggingCol] = useState(false)
-  const [renamingColumn, setRenamingColumn] = useState<RenameTarget | null>(null)
 
-  const data = store.getState()
-  const board = data.boards.find((b) => b.id === boardId) ?? null
-  if (!board) return null
+  const board = store.getState().boards.find((b) => b.id === boardId)!
 
   function handleColReorder(fromIdx: number, toIdx: number) {
     setIsDraggingCol(false)
@@ -85,8 +77,6 @@ export function ColumnList({ boardId }: { boardId: string }) {
           colIdx={colIdx}
           boardId={boardId}
           totalColumns={board.columns.length}
-          renamingColumn={renamingColumn}
-          setRenamingColumn={setRenamingColumn}
           isDraggingCard={isDraggingCard}
           dragColId={dragColId}
           dragDataRef={dragDataRef}
