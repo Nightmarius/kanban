@@ -1,6 +1,6 @@
-import { useRef, useState, useEffect } from 'react'
 import type { Board as BoardType } from './types'
 import { ColumnList } from './ColumnList'
+import { EditableText } from './EditableText'
 
 interface BoardProps {
   board: BoardType
@@ -11,48 +11,14 @@ interface BoardProps {
 }
 
 export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabled }: BoardProps) {
-  const [boardNameEdit, setBoardNameEdit] = useState(false)
-  const [boardDraftName, setBoardDraftName] = useState(board.name)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (boardNameEdit && inputRef.current) inputRef.current.focus()
-  }, [boardNameEdit])
-  useEffect(() => {
-    setBoardDraftName(board.name)
-  }, [board.name])
-
-  function commitRename() {
-    setBoardNameEdit(false)
-    onRename(boardDraftName)
-  }
-
   return (
     <div className='flex flex-col h-full'>
       <div className='flex items-center gap-2 p-3 mb-4 border-b-2 border-card'>
-        {boardNameEdit ? (
-          <input
-            ref={inputRef}
-            className='text-2xl font-bold px-2 py-1 rounded border border-transparent bg-transparent text-text flex-1 cursor-text focus:border-accent focus:bg-card outline-none'
-            value={boardDraftName}
-            onChange={(e) => setBoardDraftName(e.target.value)}
-            onBlur={commitRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitRename()
-              if (e.key === 'Escape') {
-                setBoardDraftName(board.name)
-                setBoardNameEdit(false)
-              }
-            }}
-          />
-        ) : (
-          <span
-            className='text-2xl font-bold px-2 py-1 rounded bg-transparent text-text flex-1 cursor-text focus:border-accent focus:bg-card outline-none'
-            onDoubleClick={() => setBoardNameEdit(true)}
-          >
-            {board.name}
-          </span>
-        )}
+        <EditableText
+          value={board.name}
+          onSave={(name) => onRename(name)}
+          className='text-2xl font-bold px-2 py-1 rounded bg-transparent text-text flex-1 cursor-text focus:border-accent focus:bg-card outline-none'
+        />
 
         <AutoSaveIndicator autoSaveEnabled={autoSaveEnabled} />
         {onSaveLocation && (
