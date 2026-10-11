@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import * as store from './store'
 import type { Column as ColumnType } from './types'
 import { Item } from './Item'
-import { NewItemForm } from './NewItemForm'
 import { EditableText } from './EditableText'
 
 interface ColumnProps {
@@ -10,9 +9,9 @@ interface ColumnProps {
   colIdx: number
   boardId: string
   totalColumns: number
-  isDraggingCard: boolean
+  isDraggingItem: boolean
   dragColId: string | null
-  dragDataRef: React.MutableRefObject<{ colId: string; itemIdx: number; cardId: string; text: string } | null>
+  dragDataRef: React.MutableRefObject<{ colId: string; itemIdx: number; itemId: string; text: string } | null>
   isDraggingCol: boolean
   dropAboveItemIdx: number | null
   dragTargetColIdx: number | null
@@ -22,7 +21,8 @@ interface ColumnProps {
   onDragOver: (targetIdx: number) => void
   onDropColumn: (fromIdx: number, toIdx: number) => void
   onDragEnd: () => void
-  onDropCard: (sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) => void
+  onDropItem: (sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) => void
+  onDeleteColumn: (boardId: string, colId: string) => void
 }
 
 export function Column({
@@ -30,7 +30,7 @@ export function Column({
   colIdx,
   boardId,
   totalColumns,
-  isDraggingCard,
+  isDraggingItem,
   dragColId,
   dragDataRef,
   isDraggingCol,
@@ -42,19 +42,21 @@ export function Column({
   onDragOver,
   onDropColumn,
   onDragEnd,
-  onDropCard,
+  onDropItem,
+  onDeleteColumn,
 }: ColumnProps) {
   const isDragTarget = dragTargetColIdx === colIdx
+  const [isAddMode, setIsAddMode] = useState(false)
 
-  function handleCardDragOver(e: React.DragEvent<HTMLDivElement>) {
+  function handleItemDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
 
     const targetEl = e.currentTarget as HTMLElement
-    const cards = [...targetEl.querySelectorAll('.drop-target')].filter((el) => !el.classList.contains('dragging')) as HTMLElement[]
+    const items = [...targetEl.querySelectorAll('.drop-target')].filter((el) => !el.classList.contains('dragging')) as HTMLElement[]
     let foundIndex: number | null = null
 
-    for (let i = 0; i < cards.length; i++) {
-      const rect = cards[i].getBoundingClientRect()
+    for (let i = 0; i < items.length; i++) {
+      const rect = items[i].getBoundingClientRect()
       const midY = rect.top + rect.height / 2
       if (e.clientY < midY) {
         foundIndex = i
@@ -63,20 +65,22 @@ export function Column({
     }
 
     onDropTargetChange(foundIndex)
+    console.log('' + dragColId + ' col' + colIdx)
   }
 
-  function handleCardDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handleItemDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
     e.stopPropagation()
 
     const dragData = JSON.parse(e.dataTransfer.getData('text/plain'))
-    if (dragData.cardId) {
-      dragDataRef.current = { cardId: dragData.cardId, colId: dragData.colId, itemIdx: dragData.itemIdx, text: dragData.text }
-      onDropCard(dragData.colId, colIdx, dropAboveItemIdx)
+    if (dragData.itemId) {
+      dragDataRef.current = { itemId: dragData.itemId, colId: dragData.colId, itemIdx: dragData.itemIdx, text: dragData.text }
+      onDropItem(dragData.colId, colIdx, dropAboveItemIdx)
     }
 
     onDragEnd()
     onDropTargetChange(null)
+    console.log('' + dragColId + ' col' + colIdx)
   }
 
   function handleColDragOver(e: React.DragEvent<HTMLDivElement>) {
@@ -86,11 +90,15 @@ export function Column({
     onDragOver(colIdx)
   }
 
+  function addItem() {
+    store.addItem(boardId, column.id)
+    //TODO column.items[column.items.length - 1].edit()
+  }
+
   return (
-    <div className={`bg-card rounded-lg flex-1 flex flex-col min-w-70 max-w-85 ${isDraggingCol ? 'cursor-grabbing' : ''} ${isDragTarget ? 'border border-accent' : ''}`} onDragOver={handleColDragOver}>
+    <div className={`bg-card rounded-lg flex flex-1 flex-col ${isDraggingCol ? 'cursor-grabbing' : ''}`} onDragOver={handleColDragOver}>
       <div
-        draggable={!isDraggingCard}
-        className='flex items-center justify-between p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab select-none active:cursor-grabbing'
+        className='flex p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab'
         onDragStart={(e) => {
           e.stopPropagation()
           e.dataTransfer.effectAllowed = 'move'
@@ -123,22 +131,23 @@ export function Column({
         </button>
       </div>
 
-      <div className='flex-1 overflow-y-auto p-2 min-h-10 flex flex-col gap-1.5' onDrop={handleCardDrop} onDragOver={handleCardDragOver}>
+      <div className='flex-1 overflow-y-auto p-2 min-h-10 flex flex-col gap-1.5' onDrop={handleItemDrop} onDragOver={handleItemDragOver}>
         {column.items.map((item, itemIdx) => (
           <Item
             key={item.id}
-            card={item}
+            item={item}
             itemIdx={itemIdx}
             boardId={boardId}
             colId={column.id}
-            isDragging={isDraggingCard && dragColId === column.id}
-            dropAbove={dropAboveItemIdx === itemIdx}
+            isDragging={isDraggingItem && dragColId === column.id}
+            dropAbove={dropAboveItemIdx === itemIdx && colIdx === itemIdx}
             onStartDrag={onStartDrag}
           />
         ))}
-
-        <NewItemForm boardId={boardId} colId={column.id} />
       </div>
+      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer' onClick={() => addItem()}>
+        + Add item
+      </button>
     </div>
   )
 }
