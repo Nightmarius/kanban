@@ -111,7 +111,7 @@ export function Column({
           onSave={(name) => {
             if (name.trim()) store.renameColumn(boardId, column.id, name.trim())
           }}
-          className='text-text font-semibold text-base w-full'
+          className='font-semibold'
         />
 
         <button
