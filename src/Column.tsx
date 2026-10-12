@@ -3,6 +3,7 @@ import * as store from './store'
 import type { Column as ColumnType } from './types'
 import { EditableText } from './EditableText'
 import { Item } from './Item'
+import { showConfirm } from './ConfirmModal'
 
 interface ColumnProps {
   column: ColumnType
@@ -85,14 +86,13 @@ export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver,
         />
         <button
           className='text-text cursor-pointer ml-2'
-          onClick={() => {
-            const shouldConfirm = column.items.length > 0
-            if (shouldConfirm) {
-              const msg = `Delete "${column.name}" and all items inside (This can not be undone)?`
-              confirm(msg) && store.deleteColumn(boardId, column.id)
-            } else {
-              store.deleteColumn(boardId, column.id)
-            }
+          onClick={async () => {
+            const confirmed = await showConfirm({
+              title: `Delete ${column.name}`,
+              message: `Are you sure you want to delete column "${column.name}" and all contained items? This action can not be undone.`,
+              confirmLabel: 'Delete',
+            })
+            if (confirmed) store.deleteColumn(boardId, column.id)
           }}
           title='Delete column'
         >
@@ -100,7 +100,7 @@ export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver,
         </button>
       </div>
 
-      <div className='flex-1 overflow-y-auto p-2 flex flex-col gap-1.5' onDragOver={handleDragOver} onDrop={handleDrop} onDragLeave={handleDragLeave}>
+      <div className='flex-1 min-h-7 overflow-y-auto p-2 flex flex-col gap-1.5' onDragOver={handleDragOver} onDrop={handleDrop} onDragLeave={handleDragLeave}>
         {showIndicator && dropAboveIdx === 0 && <div className='h-0.75 rounded bg-accent shadow-lg z-20 pointer-events-none' />}
 
         {column.items.map((item, idx) => (
