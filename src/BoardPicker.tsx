@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import * as store from './store'
 import type { Board } from './types'
-import { showConfirm } from './ConfirmModal'
+import { DeleteButton } from './DeleteButton'
 
 interface BoardPickerProps {
   boards: Board[]
@@ -10,9 +10,10 @@ interface BoardPickerProps {
   onImport?: () => void
   onCreateNew?: () => void
   onClose?: () => void
+  onDelete?: (id: string, name: string) => void
 }
 
-export function BoardPicker({ boards, activeBoardId, onActivate, onImport, onCreateNew, onClose }: BoardPickerProps) {
+export function BoardPicker({ boards, activeBoardId, onActivate, onImport, onCreateNew, onClose, onDelete }: BoardPickerProps) {
   const [open, setOpen] = useState(false)
   const [renamingBoard, setRenamingBoard] = useState<{ id: string; name: string } | null>(null)
 
@@ -28,18 +29,6 @@ export function BoardPicker({ boards, activeBoardId, onActivate, onImport, onCre
     onImport?.()
     onClose?.()
     setOpen(false)
-  }
-
-  async function handleDeleteBoard(boardId: string, boardName: string) {
-    const confirmed = await showConfirm({
-      title: 'Delete Board',
-      message: `Are you sure you want to delete "${boardName}"?`,
-      confirmLabel: 'Delete',
-    })
-    if (confirmed) {
-      const nextId = store.deleteBoard(boardId)
-      if (nextId) onActivate(nextId)
-    }
   }
 
   return (
@@ -78,15 +67,12 @@ export function BoardPicker({ boards, activeBoardId, onActivate, onImport, onCre
                       }}
                     />
                     {boards.length > 1 && (
-                      <button
-                        className={`ml-1 w-5 h-5 flex items-center justify-center rounded text-xs transition-opacity bg-transparent text-text/50 cursor-pointer hover:text-red-600 ${board.id === activeBoardId ? 'opacity-70' : 'opacity-0'} hover:opacity-100`}
+                      <DeleteButton
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDeleteBoard(board.id, board.name)
+                          onDelete?.(board.id, board.name)
                         }}
-                      >
-                        ×
-                      </button>
+                      />
                     )}
                   </div>
                 </li>
