@@ -1,5 +1,6 @@
 import * as store from './store'
 import { EditableText } from './EditableText'
+import { DeleteButton } from './DeleteButton'
 
 interface ItemProps {
   item: string
@@ -30,9 +31,7 @@ export function Item({ item, index, colId, boardId, done }: ItemProps) {
             ✓
           </button>
         )}
-        <button className='text-text cursor-pointer size-6' onClick={() => store.deleteItem(boardId, colId, index)} title='Delete'>
-          ✕
-        </button>
+        <DeleteButton onClick={() => store.deleteItem(boardId, colId, index)} />
       </div>
     </div>
   )

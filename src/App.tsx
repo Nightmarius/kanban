@@ -3,7 +3,7 @@ import * as store from './store'
 import type { KanbanData } from './types'
 import { BoardPicker } from './BoardPicker'
 import { Board } from './Board'
-import { ConfirmProvider } from './ConfirmModal'
+import { ConfirmProvider, showConfirm } from './ConfirmModal'
 
 export function App() {
   return (
@@ -41,13 +41,29 @@ function AppContent() {
     saveAsFile(formatBoardAsMd(activeBoard!), activeBoard?.name)
   }
 
+  async function handleDeleteActiveBoard() {
+    if (!activeBoard) return
+    handleDeleteBoardFromPicker(activeBoard.id, activeBoard.name)
+  }
+
+  async function handleDeleteBoardFromPicker(boardId: string, boardName: string) {
+    if (!activeBoard) return
+    const confirmed = await showConfirm({
+      title: 'Delete Board',
+      message: `Are you sure you want to delete "${boardName}" with all contained columns and items? This action can not be undone.`,
+      confirmLabel: 'Delete',
+    })
+    const nextId = store.deleteBoard(boardId)
+    if (nextId) setActiveBoardId(nextId)
+  }
+
   function handleNewImportFile() {
     importInputRef.current?.click()
   }
 
   return (
     <div className='relative bg-bg main-content'>
-      <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} onImport={handleNewImportFile} />
+      <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} onImport={handleNewImportFile} onDelete={handleDeleteBoardFromPicker} />
       <input
         ref={importInputRef}
         type='file'
@@ -63,15 +79,7 @@ function AppContent() {
         }}
       />
       {activeBoard ? (
-        <Board
-          board={activeBoard}
-          onRename={(name: string) => store.renameBoard(activeBoard.id, name)}
-          onDelete={() => {
-            const nextId = store.deleteBoard(activeBoard.id)
-            setActiveBoardId(nextId || null)
-          }}
-          onSave={handleSave}
-        />
+        <Board board={activeBoard} onRename={(name: string) => store.renameBoard(activeBoard.id, name)} onDelete={handleDeleteActiveBoard} onSave={handleSave} />
       ) : (
         <EmptyState
           onImport={handleNewImportFile}
