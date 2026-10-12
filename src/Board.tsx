@@ -8,11 +8,10 @@ interface BoardProps {
   board: BoardType
   onRename: (name: string) => void
   onDelete: () => void
-  onSaveLocation?: () => Promise<void>
-  autoSaveEnabled: boolean
+  onSave: () => void
 }
 
-export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabled }: BoardProps) {
+export function Board({ board, onRename, onDelete, onSave }: BoardProps) {
   const [targetColId, setTargetColId] = useState<string | null>(null)
   const [dropAboveIdx, setDropAboveIdx] = useState<number | null>(null)
 
@@ -20,21 +19,15 @@ export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabl
     <div className='flex flex-col h-full'>
       <div className='flex items-center gap-2 p-3 mb-4 border-b-2 border-card'>
         <EditableText value={board.name} onSave={(name) => onRename(name)} className='text-2xl font-bold px-2 py-1 focus:bg-card' />
-
-        <AutoSaveIndicator autoSaveEnabled={autoSaveEnabled} />
-        {onSaveLocation && (
-          <button className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent' onClick={() => onSaveLocation()}>
-            Save File Location
-          </button>
-        )}
-
         <button
           className='px-6 py-1.5 rounded-lg border-2 border-dashed border-card text-text bg-transparent cursor-pointer text-sm hover:border-accent hover:text-accent transition-colors'
           onClick={() => store.addColumn(board.id)}
         >
           + Column
         </button>
-
+        <button className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent' onClick={onSave}>
+          Save
+        </button>
         <DeleteButton board={board} onDelete={onDelete} />
       </div>
 
@@ -79,8 +72,4 @@ function DeleteButton({ board, onDelete }: { board: BoardType; onDelete: () => v
       ✕
     </button>
   )
-}
-
-function AutoSaveIndicator({ autoSaveEnabled }: { autoSaveEnabled: boolean }) {
-  return <span className='text-sm px-2 text-accent'>{autoSaveEnabled ? 'Auto On' : null}</span>
 }

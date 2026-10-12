@@ -37,7 +37,7 @@ export function getState(): KanbanData {
 }
 
 export function importFromJSON(json: KanbanData) {
-  state = json
+  state.boards.push(...json.boards)
   notify()
 }
 
@@ -46,15 +46,7 @@ export function exportAsJSON(): string {
 }
 
 export function addBoard(): Board {
-  const board: Board = {
-    id: 'board-' + Date.now(),
-    name: '',
-    columns: [
-      { id: 'col-' + Date.now() + '-1', done: 0, name: 'To Do', items: [] },
-      { id: 'col-' + Date.now() + '-2', done: 0, name: 'In Progress', items: [] },
-      { id: 'col-' + Date.now() + '-3', done: 0, name: 'Done', items: [] },
-    ],
-  }
+  const board = structuredClone(defaultData).boards[0]
   state.boards.push(board)
   notify()
   return board
@@ -117,28 +109,13 @@ function findColumn(boardId: string, colId: string): Column | null {
   return board.columns.find((c) => c.id === colId) || null
 }
 
-export function moveItem(boardId: string, fromColId: string, toColId: string, itemIdx: number, reorderTargetIndex?: number) {
+export function moveItem(boardId: string, fromColId: string, toColId: string, fromItemIndex: number, toItemIndex?: number) {
   const src = findColumn(boardId, fromColId)
   const dst = findColumn(boardId, toColId)
-  if (!src || !dst) return
-  const item = src.items[itemIdx]
-  if (src === dst && reorderTargetIndex != null) {
-    // Within same column - remove from old position and re-insert at new
-    src.items.splice(itemIdx, 1)
-    const insertAt = Math.min(reorderTargetIndex, src.items.length)
-    src.items.splice(insertAt, 0, item)
-    notify()
-    return
-  }
-
-  src.items.splice(itemIdx, 1)
-
-  if (reorderTargetIndex != null && reorderTargetIndex > 0) {
-    const insertAt = Math.min(reorderTargetIndex, dst.items.length)
-    dst.items.splice(insertAt, 0, item)
-  } else {
-    dst.items.push(item)
-  }
+  if (!src || !dst || toItemIndex == null || dst.done > toItemIndex) return
+  const item = src.items[fromItemIndex]
+  src.items.splice(fromItemIndex, 1)
+  dst.items.splice(toItemIndex, 0, item)
   notify()
 }
 
@@ -159,8 +136,9 @@ export function updateItem(boardId: string, colId: string, itemIndex: number, te
 export function finishItem(boardId: string, colId: string, itemIndex: number) {
   const col = findColumn(boardId, colId)
   if (!col) return
-  if (col.done++ < itemIndex) {
+  if (col.done < itemIndex) {
     moveItem(boardId, colId, colId, itemIndex, col.done - 1)
+    col.done++
   } else {
     notify()
   }
