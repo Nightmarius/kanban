@@ -1,7 +1,7 @@
 import defaultData from './appData.json' with { type: 'json' }
-import type { Board, BoardItem, Column, KanbanData } from './types'
+import type { Board, Column, KanbanData } from './types'
 
-const STORAGE_KEY = 'kanban-data'
+const STORAGE_KEY = 'data'
 
 let state: KanbanData = load()
 const listeners = new Set<(s: KanbanData) => void>()
@@ -120,10 +120,7 @@ export function moveItem(boardId: string, fromColId: string, toColId: string, it
   const src = findColumn(boardId, fromColId)
   const dst = findColumn(boardId, toColId)
   if (!src || !dst) return
-
   const item = src.items[itemIdx]
-  if (!item) return
-
   if (src === dst && reorderTargetIndex != null) {
     // Within same column - remove from old position and re-insert at new
     src.items.splice(itemIdx, 1)
@@ -133,11 +130,10 @@ export function moveItem(boardId: string, fromColId: string, toColId: string, it
     return
   }
 
-  // Cross-column move
   src.items.splice(itemIdx, 1)
 
   if (reorderTargetIndex != null && reorderTargetIndex > 0) {
-    const insertAt = Math.min(reorderTargetIndex - 1, dst.items.length)
+    const insertAt = Math.min(reorderTargetIndex, dst.items.length)
     dst.items.splice(insertAt, 0, item)
   } else {
     dst.items.push(item)
@@ -148,22 +144,20 @@ export function moveItem(boardId: string, fromColId: string, toColId: string, it
 export function addItem(boardId: string, colId: string) {
   const col = findColumn(boardId, colId)
   if (!col) return
-  col.items.push({ id: 'item-' + Date.now(), text: '' })
+  col.items.push('')
   notify()
 }
 
-export function updateItem(boardId: string, colId: string, itemIdx: number, text: string) {
+export function updateItem(boardId: string, colId: string, itemIndex: number, text: string) {
   const col = findColumn(boardId, colId)
   if (!col) return
-  const item = col.items[itemIdx]
-  if (!item) return
-  item.text = text
+  col.items[itemIndex] = text
   notify()
 }
 
-export function deleteItem(boardId: string, colId: string, itemIdx: number) {
+export function deleteItem(boardId: string, colId: string, itemIndex: number) {
   const col = findColumn(boardId, colId)
   if (!col) return
-  col.items.splice(itemIdx, 1)
+  col.items.splice(itemIndex, 1)
   notify()
 }

@@ -1,111 +1,81 @@
-import { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import * as store from './store'
 import type { Column as ColumnType } from './types'
-import { Item } from './Item'
 import { EditableText } from './EditableText'
+import { Item } from './Item'
 
 interface ColumnProps {
   column: ColumnType
-  colIdx: number
   boardId: string
-  totalColumns: number
-  isDraggingItem: boolean
-  dragColId: string | null
-  dragDataRef: React.MutableRefObject<{ colId: string; itemIdx: number; itemId: string; text: string } | null>
-  isDraggingCol: boolean
-  dropAboveItemIdx: number | null
-  draggedFromColId: string | null
-  onDropTargetChange: (idx: number | null) => void
-  onStartDrag: () => void
-  onColumnDragStart: () => void
-  onDragOver: (targetIdx: number) => void
-  onDropColumn: (fromIdx: number, toIdx: number) => void
-  onDragEnd: () => void
-  onDropItem: (sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) => void
-  onDeleteColumn: (boardId: string, colId: string) => void
+  targetColId: string | null
+  dropAboveIdx: number | null
+  onDragOver: (idx: number | null) => void
+  onSetTarget: () => void
+  onClearTarget: () => void
 }
 
-export function Column({
-  column,
-  colIdx,
-  boardId,
-  totalColumns,
-  isDraggingItem,
-  dragColId,
-  dragDataRef,
-  isDraggingCol,
-  dropAboveItemIdx,
-  draggedFromColId,
-  onDropTargetChange,
-  onStartDrag,
-  onColumnDragStart,
-  onDragOver,
-  onDropColumn,
-  onDragEnd,
-  onDropItem,
-  onDeleteColumn,
-}: ColumnProps) {
-  const isDragTarget = draggedFromColId === column.id
+export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver, onSetTarget, onClearTarget }: ColumnProps) {
+  const dropIdxRef = useRef<number | null>(null)
 
-  function handleItemDragOver(e: React.DragEvent<HTMLDivElement>) {
-    if (!isDraggingItem || draggedFromColId !== column.id) return
-
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
+    if (!colIsTarget) onSetTarget()
 
-    const targetEl = e.currentTarget as HTMLElement
-    const items = [...targetEl.querySelectorAll('.drop-target')].filter((el) => !el.classList.contains('dragging')) as HTMLElement[]
-    let foundIndex: number | null = null
+    const idx = computeDropIndex(e)
+    dropIdxRef.current = idx
+    onDragOver(idx)
+  }
 
+  function computeDropIndex(e: React.DragEvent<HTMLDivElement>): number | null {
+    const items = [...e.currentTarget.querySelectorAll('.drop-target')] as HTMLElement[]
+    let idx: number | null = null
     for (let i = 0; i < items.length; i++) {
       const rect = items[i].getBoundingClientRect()
-      const midY = rect.top + rect.height / 2
-      if (e.clientY < midY) {
-        foundIndex = i
+      if (e.clientY < rect.top + rect.height / 2) {
+        idx = i
         break
+      } else {
+        idx = i + 1
+      }
+    }
+    return column.items.length > 0 ? idx : null
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    const dragData = e.dataTransfer.getData('text/plain')
+    let sourceItemIdx = -1
+    let sourceColId: string | null = null
+    if (dragData) {
+      try {
+        const { colId, index } = JSON.parse(dragData)
+        sourceColId = colId
+        sourceItemIdx = index
+      } catch {
+        // ignore parse errors
       }
     }
 
-    onDropTargetChange(foundIndex)
-  }
+    const dropIdx = dropIdxRef.current ?? column.items.length
 
-  function handleItemDrop(e: React.DragEvent<HTMLDivElement>) {
-    if (!isDraggingItem || draggedFromColId !== column.id) return
-
-    e.preventDefault()
-    e.stopPropagation()
-
-    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'))
-    if (dragData.itemId) {
-      dragDataRef.current = { itemId: dragData.itemId, colId: dragData.colId, itemIdx: dragData.itemIdx, text: dragData.text }
-      onDropItem(dragData.colId, colIdx, dropAboveItemIdx)
+    if (sourceColId && sourceItemIdx >= 0) {
+      store.moveItem(boardId, sourceColId, column.id, sourceItemIdx, dropIdx)
     }
-
-    onDragEnd()
+    onClearTarget()
   }
 
-  function handleColDragOver(e: React.DragEvent<HTMLDivElement>) {
-    if (!isDraggingCol) return
-    e.preventDefault()
-    e.stopPropagation()
-    onDragOver(colIdx)
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    const related = e.relatedTarget as HTMLElement | null
+    if (related && e.currentTarget.contains(related)) return
+    onClearTarget()
   }
 
-  function addItem() {
-    store.addItem(boardId, column.id)
-    //TODO column.items[column.items.length - 1].edit()
-  }
+  const colIsTarget = targetColId === column.id
+  const showIndicator = colIsTarget && dropAboveIdx !== null
 
   return (
-    <div className={`bg-card rounded-lg flex flex-1 flex-col ${isDraggingCol ? 'cursor-grabbing' : ''}`} onDragOver={handleColDragOver}>
-      <div
-        className='flex p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab'
-        onDragStart={(e) => {
-          e.stopPropagation()
-          e.dataTransfer.effectAllowed = 'move'
-          e.dataTransfer.setData('text/plain', String(colIdx))
-          isDraggingCol || onColumnDragStart()
-        }}
-      >
+    <div className='bg-card rounded-lg flex flex-1 flex-col'>
+      <div className='flex p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab'>
         <EditableText
           value={column.name}
           onSave={(name) => {
@@ -113,7 +83,6 @@ export function Column({
           }}
           className='font-semibold'
         />
-
         <button
           className='text-text cursor-pointer ml-2'
           onClick={() => {
@@ -131,29 +100,18 @@ export function Column({
         </button>
       </div>
 
-      <div className='flex-1 overflow-y-auto p-2 min-h-10 flex flex-col gap-1.5' onDrop={handleItemDrop} onDragOver={handleItemDragOver}>
-        {isDragTarget && isDraggingItem && dropAboveItemIdx === 0 && (
-          <div className='shrink-0 h-[3px] rounded bg-accent shadow-lg z-20 pointer-events-none' style={{ marginTop: '-1.5px', marginBottom: '0px' }} />
-        )}
+      <div className='flex-1 overflow-y-auto p-2 flex flex-col gap-1.5' onDragOver={handleDragOver} onDrop={handleDrop} onDragLeave={handleDragLeave}>
+        {showIndicator && dropAboveIdx === 0 && <div className='h-0.75 rounded bg-accent shadow-lg z-20 pointer-events-none' />}
 
-        {column.items.map((item, itemIdx) => (
+        {column.items.map((item, idx) => (
           <>
-            <Item key={item.id} item={item} itemIdx={itemIdx} boardId={boardId} colId={column.id} isDragging={isDraggingItem && dragColId === column.id} onStartDrag={onStartDrag} />
-            {isDragTarget && isDraggingItem && dropAboveItemIdx === itemIdx + 1 && (
-              <div className='shrink-0 h-[3px] rounded bg-accent shadow-lg z-20 pointer-events-none' style={{ marginTop: '-1.5px', marginBottom: '0px' }} />
-            )}
+            <Item key={'item-' + idx} item={item} index={idx} colId={column.id} boardId={boardId} />
+            {showIndicator && dropAboveIdx === idx + 1 && <div className='h-0.75 rounded bg-accent shadow-lg z-20 pointer-events-none' />}
           </>
         ))}
-
-        {isDragTarget && isDraggingItem && dropAboveItemIdx === column.items.length && (
-          <div className='shrink-0 h-[3px] rounded bg-accent shadow-lg z-20 pointer-events-none' style={{ marginTop: '-1.5px', marginBottom: '6px' }} />
-        )}
-
-        {isDragTarget && isDraggingItem && column.items.length === 0 && (
-          <div className='shrink-0 h-[3px] rounded bg-accent shadow-lg z-20 pointer-events-none my-auto' />
-        )}
       </div>
-      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer' onClick={() => addItem()}>
+
+      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer' onClick={() => store.addItem(boardId, column.id)}>
         + Add item
       </button>
     </div>
