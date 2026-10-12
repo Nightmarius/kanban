@@ -1,52 +1,30 @@
-import { useState, useEffect } from 'react'
 import * as store from './store'
-import type { BoardItem } from './types'
 import { EditableText } from './EditableText'
 
 interface ItemProps {
-  item: BoardItem
-  itemIdx: number
-  boardId: string
+  item: string
+  index: number
   colId: string
-  isDragging: boolean
-  onStartDrag: () => void
+  boardId: string
 }
 
-export function Item({ item, itemIdx, boardId, colId, isDragging, onStartDrag }: ItemProps) {
-  const [draft, setDraft] = useState(item.text)
-
-  useEffect(() => setDraft(item.text), [item.text])
-
-  function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
-    onStartDrag()
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData(
-      'text/plain',
-      JSON.stringify({
-        itemId: item.id,
-        text: item.text,
-        colId,
-        itemIdx,
-      }),
-    )
-  }
-
+export function Item({ item, index, colId, boardId }: ItemProps) {
   return (
     <div
-      className={`cursor-grab rounded-sm bg-item p-3 text-sm leading-relaxed flex items-start 
-        gap-2 select-none drop-target ${isDragging ? 'scale-95 rotate-2 bg-green-500' : ''}`}
+      className='cursor-grab rounded-sm bg-item p-3 text-sm leading-relaxed flex items-start gap-2 select-none drop-target'
       draggable
-      onDragStart={handleDragStart}
+      onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ colId, index }))}
     >
       <EditableText
-        value={item.text}
+        value={item}
         onSave={(text) => {
-          if (text.trim()) store.updateItem(boardId, colId, itemIdx, text)
+          console.log(text)
+          if (text.trim()) store.updateItem(boardId, colId, index, text)
         }}
         className='text-sm word-break-break-word'
       />
       <div className='flex gap-x-0.5'>
-        <button className='text-text cursor-pointer size-6' onClick={() => store.deleteItem(boardId, colId, itemIdx)} title='Delete'>
+        <button className='text-text cursor-pointer size-6' onClick={() => store.deleteItem(boardId, colId, index)} title='Delete'>
           ✕
         </button>
       </div>

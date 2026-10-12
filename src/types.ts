@@ -1,12 +1,7 @@
-export interface BoardItem {
-  id: string
-  text: string
-}
-
 export interface Column {
   id: string
   name: string
-  items: BoardItem[]
+  items: string[]
 }
 
 export interface Board {

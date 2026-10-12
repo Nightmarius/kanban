@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
-import type { Board as BoardType } from './types'
+import { useState } from 'react'
 import * as store from './store'
+import type { Board as BoardType } from './types'
 import { EditableText } from './EditableText'
 import { Column } from './Column'
 
@@ -13,32 +13,8 @@ interface BoardProps {
 }
 
 export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabled }: BoardProps) {
-  const [isDraggingItem, setIsDraggingItem] = useState(false)
-  const [dragColId, setDragColId] = useState<string | null>(null)
-  const dragDataRef = useRef<{ colId: string; itemIdx: number; itemId: string; text: string } | null>(null)
-  const [dropAboveItemIdx, setDropAboveItemIdx] = useState<number | null>(null)
-  const [draggedFromColId, setDraggedFromColId] = useState<string | null>(null)
-  const isDraggingColRef = useRef(false)
-
-  const handleColReorder = (fromIdx: number, toIdx: number) => {
-    isDraggingColRef.current = false
-    store.moveColumn(board.id, fromIdx, toIdx)
-  }
-
-  const onDropItem = (sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) => {
-    if (!dragDataRef.current) return
-    const dragData = dragDataRef.current
-
-    store.moveItem(board.id, dragData.colId, board.columns[targetColIdx].id, dragData.itemIdx, dropAboveItemIdx ?? undefined)
-
-    setIsDraggingItem(false)
-    setDraggedFromColId(null)
-  }
-
-  const onDragEnd = () => {
-    isDraggingColRef.current = false
-    setIsDraggingItem(false)
-  }
+  const [targetColId, setTargetColId] = useState<string | null>(null)
+  const [dropAboveIdx, setDropAboveIdx] = useState<number | null>(null)
 
   return (
     <div className='flex flex-col h-full'>
@@ -63,24 +39,19 @@ export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabl
       </div>
 
       <div className='flex-1 flex gap-3 overflow-x-auto px-2 pb-4 items-start'>
-        {board.columns.map((col, colIdx) => (
+        {board.columns.map((col) => (
           <Column
             key={col.id}
             column={col}
-            colIdx={colIdx}
             boardId={board.id}
-            isDraggingItem={isDraggingItem}
-            dragColId={dragColId}
-            dragDataRef={dragDataRef}
-            isDraggingCol={isDraggingColRef.current}
-            dropAboveItemIdx={dropAboveItemIdx}
-            draggedFromColId={draggedFromColId}
-            onDropTargetChange={(idx) => setDropAboveItemIdx(idx)}
-            onStartDrag={() => { setIsDraggingItem(true); setDraggedFromColId(col.id) }}
-            onColumnDragStart={() => isDraggingColRef.current = true}
-            onDropColumn={handleColReorder}
-            onDragEnd={onDragEnd}
-            onDropItem={onDropItem}
+            targetColId={targetColId}
+            dropAboveIdx={dropAboveIdx}
+            onDragOver={(idx) => setDropAboveIdx(idx)}
+            onSetTarget={() => setTargetColId(col.id)}
+            onClearTarget={() => {
+              setTargetColId(null)
+              setDropAboveIdx(null)
+            }}
           />
         ))}
       </div>
