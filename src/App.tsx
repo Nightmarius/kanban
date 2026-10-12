@@ -11,14 +11,19 @@ export function App() {
 
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
-  const activeBoard = data.boards.find(b => b.id === activeBoardId) ?? null
+  const activeBoard = data.boards.find((b) => b.id === activeBoardId) ?? null
 
   function handleImport(text: string) {
     try {
       const parsed = parseBoardFromMd(text)
+      if (!parsed.boards?.length) {
+        alert('No boards found in file.')
+        return
+      }
       setActiveBoardId(parsed.boards[0]?.id ?? null)
       store.importFromJSON(parsed)
-    } catch {
+    } catch (e) {
+      console.error(e)
       alert('Invalid kanban .md file.')
     }
   }
@@ -34,21 +39,22 @@ export function App() {
   return (
     <div className='main-content bg-bg'>
       <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} onImport={handleNewImportFile} />
-      <input ref={importInputRef} type='file' accept='.md' style={{ display: 'none' }} onChange={(e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        const reader = new FileReader()
-        reader.onload = () => handleImport(reader.result as string)
-        reader.readAsText(file)
-        e.target.value = ''
-      }} />
+      <input
+        ref={importInputRef}
+        type='file'
+        accept='.md'
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          const reader = new FileReader()
+          reader.onload = () => handleImport(reader.result as string)
+          reader.readAsText(file)
+          e.target.value = ''
+        }}
+      />
       {activeBoard ? (
-        <Board
-          board={activeBoard}
-          onRename={(name: string) => store.renameBoard(activeBoard.id, name)}
-          onDelete={() => store.deleteBoard(activeBoard.id)}
-          onSave={handleSave}
-        />
+        <Board board={activeBoard} onRename={(name: string) => store.renameBoard(activeBoard.id, name)} onDelete={() => { const nextId = store.deleteBoard(activeBoard.id); setActiveBoardId(nextId || null); }} onSave={handleSave} />
       ) : (
         <EmptyState onImport={handleImport} />
       )}
@@ -58,18 +64,11 @@ export function App() {
 
 function EmptyState({ onImport }: { onImport: (text: string) => void }) {
   return (
-    <div className='empty-state'>
-      <p className='text-text'>No boards loaded.</p>
-      <label className='action-btn bg-card text-text cursor-pointer'>
-        Import .md
-        <input type='file' accept='.md' onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (!file) return
-          const reader = new FileReader()
-          reader.onload = () => onImport(reader.result as string)
-          reader.readAsText(file)
-          e.target.value = ''
-        }} className='hidden' />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '1rem' }}>
+      <h2 style={{ color: 'var(--text)', margin: 0, fontSize: '1.5rem' }}>No boards yet</h2>
+      <label style={{ padding: '0.75rem 2rem', border: '2px dashed var(--card)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer', borderRadius: '0.5rem', fontSize: '1rem', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--card)'; e.currentTarget.style.color = 'var(--text)'; }}>
+        Import .md file
+        <input type='file' accept='.md' style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => onImport(reader.result as string); reader.readAsText(file); e.target.value = ''; }} />
       </label>
     </div>
   )
@@ -79,27 +78,29 @@ function formatBoardAsMd(board: { name: string; columns: Array<{ name: string; i
   return [
     `# ${board.name}`,
     '',
-    ...board.columns.map((col) => {
-      const doneItems = typeof col.done === 'number' ? Math.min(col.done, col.items.length) : 0
-      const lines: string[] = [`## ${col.name}`]
-      if (doneItems > 0) {
-        lines.push(`<!-- done:${doneItems} -->`)
-        lines.push('')
-      } else {
-        lines.push('')
-      }
-      for (let i = 0; i < col.items.length; i++) {
-        const item = col.items[i]
-        const text = typeof item === 'string' ? item : item.text || ''
-        if (typeof col.done === 'number' && i < col.done) {
-          lines.push(`- [x] ${text}`)
+    ...board.columns
+      .map((col) => {
+        const doneItems = typeof col.done === 'number' ? Math.min(col.done, col.items.length) : 0
+        const lines: string[] = [`## ${col.name}`]
+        if (doneItems > 0) {
+          lines.push(`<!-- done:${doneItems} -->`)
+          lines.push('')
         } else {
-          lines.push(`- ${text}`)
+          lines.push('')
         }
-      }
-      lines.push('')
-      return lines
-    }).flat(),
+        for (let i = 0; i < col.items.length; i++) {
+          const item = col.items[i]
+          const text = typeof item === 'string' ? item : item.text || ''
+          if (typeof col.done === 'number' && i < col.done) {
+            lines.push(`- [x] ${text}`)
+          } else {
+            lines.push(`- ${text}`)
+          }
+        }
+        lines.push('')
+        return lines
+      })
+      .flat(),
   ].join('\n')
 }
 
@@ -122,8 +123,7 @@ export function parseBoardFromMd(text: string): KanbanData {
 
     if (line.startsWith('# ') && !currentBoard) {
       currentBoard = { name: line.slice(2).trim(), columns: [] }
-    }
-    else if (currentBoard && new RegExp(`^##\\S`).test(line)) {
+    } else if (currentBoard && /^##/.test(line)) {
       const headerContent = line.slice(2).trim()
       if (!headerContent) continue
 
@@ -146,12 +146,20 @@ export function parseBoardFromMd(text: string): KanbanData {
       while (i < lines.length) {
         const next = lines[i].trim()
 
-        if (!next || /^<!--/.test(next)) { i++; continue }
+        if (!next || /^<!--/.test(next)) {
+          i++
+          continue
+        }
         if (/^##/.test(next)) break
-        if (!/^\- /.test(next)) { i++; continue }
+        if (!/^\- /.test(next) && !/^- /.test(next)) {
+          i++
+          continue
+        }
 
         let itemText: string
         if (next.startsWith('- [x] ') || next.startsWith('- [X] ')) {
+          itemText = next.slice(6).trim()
+        } else if (next.startsWith('- [ ] ')) {
           itemText = next.slice(6).trim()
         } else {
           itemText = next.slice(2).trim()

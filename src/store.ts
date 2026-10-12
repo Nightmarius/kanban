@@ -52,9 +52,17 @@ export function addBoard(): Board {
   return board
 }
 
-export function deleteBoard(id: string) {
+export function deleteBoard(id: string): string | null {
+  const idx = state.boards.findIndex((b) => b.id === id)
   state.boards = state.boards.filter((b) => b.id !== id)
+  let nextBoardId: string | null = null
+  if (idx > 0) {
+    nextBoardId = state.boards[idx - 1]?.id ?? null
+  } else if (state.boards.length > 0) {
+    nextBoardId = state.boards[0].id
+  }
   notify()
+  return nextBoardId
 }
 
 export function renameBoard(id: string, name: string) {
