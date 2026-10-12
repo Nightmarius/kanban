@@ -1,6 +1,7 @@
 export interface Column {
   id: string
   name: string
+  done: number
   items: string[]
 }
 

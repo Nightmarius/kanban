@@ -105,7 +105,7 @@ export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver,
 
         {column.items.map((item, idx) => (
           <>
-            <Item key={'item-' + idx} item={item} index={idx} colId={column.id} boardId={boardId} />
+            <Item key={'item-' + idx} item={item} index={idx} colId={column.id} boardId={boardId} done={column.done > idx} />
             {showIndicator && dropAboveIdx === idx + 1 && <div className='h-0.75 rounded bg-accent shadow-lg z-20 pointer-events-none' />}
           </>
         ))}
