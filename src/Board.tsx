@@ -15,36 +15,29 @@ interface BoardProps {
 export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabled }: BoardProps) {
   const [isDraggingItem, setIsDraggingItem] = useState(false)
   const [dragColId, setDragColId] = useState<string | null>(null)
-  const dragDataRef = useRef<{ colId: string; itemIdx: number; cardId: string; text: string } | null>(null)
+  const dragDataRef = useRef<{ colId: string; itemIdx: number; itemId: string; text: string } | null>(null)
   const [dropAboveItemIdx, setDropAboveItemIdx] = useState<number | null>(null)
-  const [dragTargetColIdx, setDragTargetColIdx] = useState<number | null>(null)
-  const [isDraggingCol, setIsDraggingCol] = useState(false)
+  const [draggedFromColId, setDraggedFromColId] = useState<string | null>(null)
+  const isDraggingColRef = useRef(false)
 
   const handleColReorder = (fromIdx: number, toIdx: number) => {
-    setIsDraggingCol(false)
-    setDragTargetColIdx(null)
+    isDraggingColRef.current = false
     store.moveColumn(board.id, fromIdx, toIdx)
   }
 
   const onDropItem = (sourceColId: string, targetColIdx: number, dropAboveItemIdx: number | null) => {
     if (!dragDataRef.current) return
     const dragData = dragDataRef.current
-    const sourceColIdActual = dragData.colId
-    const itemIdx = dragData.itemIdx
 
-    store.moveItem(board.id, sourceColIdActual, board.columns[targetColIdx].id, itemIdx, dropAboveItemIdx ?? undefined)
+    store.moveItem(board.id, dragData.colId, board.columns[targetColIdx].id, dragData.itemIdx, dropAboveItemIdx ?? undefined)
 
     setIsDraggingItem(false)
-    setDropAboveItemIdx(null)
-    setDragTargetColIdx(null)
+    setDraggedFromColId(null)
   }
 
   const onDragEnd = () => {
-    setIsDraggingCol(false)
+    isDraggingColRef.current = false
     setIsDraggingItem(false)
-    setDropAboveItemIdx(null)
-    setDragTargetColIdx(null)
-    dragDataRef.current = null
   }
 
   return (
@@ -76,19 +69,15 @@ export function Board({ board, onRename, onDelete, onSaveLocation, autoSaveEnabl
             column={col}
             colIdx={colIdx}
             boardId={board.id}
-            totalColumns={board.columns.length}
             isDraggingItem={isDraggingItem}
             dragColId={dragColId}
             dragDataRef={dragDataRef}
-            dragTargetColIdx={dragTargetColIdx}
-            isDraggingCol={isDraggingCol}
+            isDraggingCol={isDraggingColRef.current}
             dropAboveItemIdx={dropAboveItemIdx}
+            draggedFromColId={draggedFromColId}
             onDropTargetChange={(idx) => setDropAboveItemIdx(idx)}
-            onStartDrag={() => setIsDraggingItem(true)}
-            onColumnDragStart={() => setIsDraggingCol(true)}
-            onDragOver={(targetIdx) => {
-              if (dragTargetColIdx !== null && targetIdx !== dragTargetColIdx) setDragTargetColIdx(targetIdx)
-            }}
+            onStartDrag={() => { setIsDraggingItem(true); setDraggedFromColId(col.id) }}
+            onColumnDragStart={() => isDraggingColRef.current = true}
             onDropColumn={handleColReorder}
             onDragEnd={onDragEnd}
             onDropItem={onDropItem}
