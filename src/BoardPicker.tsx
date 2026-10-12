@@ -6,9 +6,10 @@ interface BoardPickerProps {
   boards: Board[]
   activeBoardId: string | null
   onActivate: (id: string) => void
+  onImport?: () => void
 }
 
-export function BoardPicker({ boards, activeBoardId, onActivate }: BoardPickerProps) {
+export function BoardPicker({ boards, activeBoardId, onActivate, onImport }: BoardPickerProps) {
   const [open, setOpen] = useState(false)
   const [renamingBoard, setRenamingBoard] = useState<{ id: string; name: string } | null>(null)
 
@@ -45,6 +46,14 @@ export function BoardPicker({ boards, activeBoardId, onActivate }: BoardPickerPr
                 </li>
               ))}
             </ul>
+            {onImport && (
+              <button
+                className='w-full px-2 py-2 rounded border border-dashed border-white/30 bg-transparent text-text cursor-pointer text-[13px] mt-1 hover:border-accent hover:text-accent transition-colors'
+                onClick={() => onImport()}
+              >
+                Import .md
+              </button>
+            )}
             <button
               className='w-full px-2 py-2 rounded border border-dashed border-white/30 bg-transparent text-text cursor-pointer text-[13px] mt-2 hover:border-accent hover:text-accent transition-colors'
               onClick={() => {
