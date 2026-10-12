@@ -6,13 +6,14 @@ interface ItemProps {
   index: number
   colId: string
   boardId: string
+  done: boolean
 }
 
-export function Item({ item, index, colId, boardId }: ItemProps) {
+export function Item({ item, index, colId, boardId, done }: ItemProps) {
   return (
     <div
-      className='cursor-grab rounded-sm bg-item p-3 text-sm leading-relaxed flex items-start gap-2 select-none drop-target'
-      draggable
+      className={'rounded-sm p-3 text-sm leading-relaxed flex items-start gap-2 select-none drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
+      draggable={!done}
       onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ colId, index }))}
     >
       <EditableText
@@ -24,6 +25,11 @@ export function Item({ item, index, colId, boardId }: ItemProps) {
         className='text-sm word-break-break-word'
       />
       <div className='flex gap-x-0.5'>
+        {!done && colId == 0 && (
+          <button className='text-text cursor-pointer size-6' onClick={() => store.finishItem(boardId, colId, index)} title='Done'>
+            ✓
+          </button>
+        )}
         <button className='text-text cursor-pointer size-6' onClick={() => store.deleteItem(boardId, colId, index)} title='Delete'>
           ✕
         </button>

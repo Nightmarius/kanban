@@ -50,9 +50,9 @@ export function addBoard(): Board {
     id: 'board-' + Date.now(),
     name: '',
     columns: [
-      { id: 'col-' + Date.now() + '-1', name: 'To Do', items: [] },
-      { id: 'col-' + Date.now() + '-2', name: 'In Progress', items: [] },
-      { id: 'col-' + Date.now() + '-3', name: 'Done', items: [] },
+      { id: 'col-' + Date.now() + '-1', done: 0, name: 'To Do', items: [] },
+      { id: 'col-' + Date.now() + '-2', done: 0, name: 'In Progress', items: [] },
+      { id: 'col-' + Date.now() + '-3', done: 0, name: 'Done', items: [] },
     ],
   }
   state.boards.push(board)
@@ -81,6 +81,7 @@ export function addColumn(boardId: string) {
   board.columns.push({
     id: 'col-' + Date.now(),
     name: '',
+    done: 0,
     items: [],
   })
   notify()
@@ -155,9 +156,20 @@ export function updateItem(boardId: string, colId: string, itemIndex: number, te
   notify()
 }
 
+export function finishItem(boardId: string, colId: string, itemIndex: number) {
+  const col = findColumn(boardId, colId)
+  if (!col) return
+  if (col.done++ < itemIndex) {
+    moveItem(boardId, colId, colId, itemIndex, col.done - 1)
+  } else {
+    notify()
+  }
+}
+
 export function deleteItem(boardId: string, colId: string, itemIndex: number) {
   const col = findColumn(boardId, colId)
   if (!col) return
+  if (col.done > itemIndex) col.done--
   col.items.splice(itemIndex, 1)
   notify()
 }
