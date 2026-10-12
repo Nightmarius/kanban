@@ -3,6 +3,7 @@ import * as store from './store'
 import type { Board as BoardType } from './types'
 import { EditableText } from './EditableText'
 import { Column } from './Column'
+import { showConfirm } from './ConfirmModal'
 
 interface BoardProps {
   board: BoardType
@@ -14,6 +15,15 @@ interface BoardProps {
 export function Board({ board, onRename, onDelete, onSave }: BoardProps) {
   const [targetColId, setTargetColId] = useState<string | null>(null)
   const [dropAboveIdx, setDropAboveIdx] = useState<number | null>(null)
+
+  async function handleDelete() {
+    const confirmed = await showConfirm({
+      title: 'Delete Board',
+      message: `Are you sure you want to delete "${board.name}" with all contained columns and items? This action can not be undone.`,
+      confirmLabel: 'Delete',
+    })
+    if (confirmed) onDelete()
+  }
 
   return (
     <div className='flex flex-col h-full'>
@@ -28,7 +38,13 @@ export function Board({ board, onRename, onDelete, onSave }: BoardProps) {
         <button className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent' onClick={onSave}>
           Save
         </button>
-        <DeleteButton board={board} onDelete={onDelete} />
+        <button
+          className='w-7 h-7 flex items-center justify-center border-none bg-transparent text-text cursor-pointer rounded text-base hover:bg-card hover:text-accent'
+          onClick={handleDelete}
+          title='Delete board'
+        >
+          ✕
+        </button>
       </div>
 
       <div className='flex-1 flex gap-3 overflow-x-auto px-2 pb-4 items-start'>
@@ -49,27 +65,5 @@ export function Board({ board, onRename, onDelete, onSave }: BoardProps) {
         ))}
       </div>
     </div>
-  )
-}
-
-function DeleteButton({ board, onDelete }: { board: BoardType; onDelete: () => void }) {
-  const itemTotal = board.columns.reduce((s, c) => s + c.items.length, 0)
-
-  function handleDelete() {
-    if (itemTotal > 0) {
-      confirm(`Delete "${board.name}" (${board.columns.length} columns, ${itemTotal} items)?`) && onDelete()
-    } else {
-      onDelete()
-    }
-  }
-
-  return (
-    <button
-      className='w-7 h-7 flex items-center justify-center border-none bg-transparent text-text cursor-pointer rounded text-base hover:bg-card hover:text-accent'
-      onClick={handleDelete}
-      title='Delete board'
-    >
-      ✕
-    </button>
   )
 }

@@ -3,8 +3,17 @@ import * as store from './store'
 import type { KanbanData } from './types'
 import { BoardPicker } from './BoardPicker'
 import { Board } from './Board'
+import { ConfirmProvider } from './ConfirmModal'
 
 export function App() {
+  return (
+    <ConfirmProvider>
+      <AppContent />
+    </ConfirmProvider>
+  )
+}
+
+function AppContent() {
   const [data, setData] = useState<KanbanData>(() => store.getState())
   const [activeBoardId, setActiveBoardId] = useState<string | null>(data.boards[0]?.id ?? null)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -37,13 +46,13 @@ export function App() {
   }
 
   return (
-    <div className='main-content bg-bg'>
+    <div className='relative bg-bg main-content'>
       <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} onImport={handleNewImportFile} />
       <input
         ref={importInputRef}
         type='file'
         accept='.md'
-        style={{ display: 'none' }}
+        className='hidden'
         onChange={(e) => {
           const file = e.target.files?.[0]
           if (!file) return
@@ -54,22 +63,53 @@ export function App() {
         }}
       />
       {activeBoard ? (
-        <Board board={activeBoard} onRename={(name: string) => store.renameBoard(activeBoard.id, name)} onDelete={() => { const nextId = store.deleteBoard(activeBoard.id); setActiveBoardId(nextId || null); }} onSave={handleSave} />
+        <Board
+          board={activeBoard}
+          onRename={(name: string) => store.renameBoard(activeBoard.id, name)}
+          onDelete={() => {
+            const nextId = store.deleteBoard(activeBoard.id)
+            setActiveBoardId(nextId || null)
+          }}
+          onSave={handleSave}
+        />
       ) : (
-        <EmptyState onImport={handleImport} />
+        <EmptyState
+          onImport={handleNewImportFile}
+          onCreateBoard={() => {
+            const newBoard = store.addBoard()
+            setActiveBoardId(newBoard.id)
+          }}
+        />
       )}
     </div>
   )
 }
 
-function EmptyState({ onImport }: { onImport: (text: string) => void }) {
+function EmptyState({ onImport, onCreateBoard }: { onImport: () => void; onCreateBoard: () => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '1rem' }}>
-      <h2 style={{ color: 'var(--text)', margin: 0, fontSize: '1.5rem' }}>No boards yet</h2>
-      <label style={{ padding: '0.75rem 2rem', border: '2px dashed var(--card)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer', borderRadius: '0.5rem', fontSize: '1rem', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--card)'; e.currentTarget.style.color = 'var(--text)'; }}>
-        Import .md file
-        <input type='file' accept='.md' style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => onImport(reader.result as string); reader.readAsText(file); e.target.value = ''; }} />
-      </label>
+    <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
+      <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
+      <div className='flex gap-2'>
+        <label className='border-2 border-dashed border-card bg-bg px-8 py-5 text-text rounded-lg text-lg cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent'>
+          Import .md file
+          <input
+            type='file'
+            accept='.md'
+            className='hidden'
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = () => onImport()
+              reader.readAsText(file)
+              e.target.value = ''
+            }}
+          />
+        </label>
+        <button className='px-6 py-5 bg-accent text-white border-none rounded-lg cursor-pointer text-lg' onClick={onCreateBoard}>
+          + New Board
+        </button>
+      </div>
     </div>
   )
 }
