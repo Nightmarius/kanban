@@ -92,8 +92,8 @@ function EmptyState({ onImport, onCreateBoard }: { onImport: () => void; onCreat
     <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
       <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
       <div className='flex gap-2'>
-        <Button text='Import .md file' type='Outline' onClick={onImport} />
-        <Button text='+ New Board' onClick={onCreateBoard} />
+        <Button text='Import .md' type='Outline' onClick={onImport} />
+        <Button text='Add New Board' onClick={onCreateBoard} />
       </div>
     </div>
   )

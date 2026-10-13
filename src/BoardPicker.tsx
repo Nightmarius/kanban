@@ -49,7 +49,7 @@ export function BoardPicker({ boards, activeBoardIndex, onActivate, onImport, on
                 setOpen(false)
               }}
             />
-            <Button text='+ New board' type='Outline' onClick={onNewBoard} />
+            <Button text='Add New Board' type='Outline' onClick={onNewBoard} />
           </nav>
         </>
       )}
