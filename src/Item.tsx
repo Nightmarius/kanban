@@ -1,6 +1,6 @@
 import * as store from './store'
 import { EditableText } from './EditableText'
-import { DeleteButton } from './DeleteButton'
+import { Button, DeleteButton } from './Button'
 
 interface ItemProps {
   item: string
@@ -13,7 +13,7 @@ interface ItemProps {
 export function Item({ item, itemIndex, colIndex, boardIndex, done }: ItemProps) {
   return (
     <div
-      className={'rounded-sm px-3 py-1 flex items-center gap-2 drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
+      className={'rounded-sm px-3 py-2 flex items-center gap-2 drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
       draggable={!done}
       onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ colIndex, itemIndex }))}
     >
@@ -24,11 +24,7 @@ export function Item({ item, itemIndex, colIndex, boardIndex, done }: ItemProps)
         }}
         className='text-sm word-break-break-word'
       />
-      {!done && colIndex === 0 && (
-        <button className='text-text cursor-pointer size-7 hover:text-accent' onClick={() => store.finishItem(boardIndex, colIndex, itemIndex)} title='Done'>
-          ✓
-        </button>
-      )}
+      {!done && colIndex === 0 && <Button text='✓' type='Icon' onClick={() => store.finishItem(boardIndex, colIndex, itemIndex)} />}
       <DeleteButton onClick={() => store.deleteItem(boardIndex, colIndex, itemIndex)} />
     </div>
   )

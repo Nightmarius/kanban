@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Button } from './Button'
 
 interface ConfirmConfig {
   title: string
@@ -62,12 +63,8 @@ function ConfirmModal() {
         <h2 className='m-0 mb-4 text-xl'>{config.title}</h2>
         {config.message && <p className='m-0 mb-6 opacity-70'>{config.message}</p>}
         <div className='flex gap-2 justify-between mt-4'>
-          <button className='px-5 py-2 rounded border-2 bg-transparent text-text cursor-pointer text-sm hover:bg-bg transition-colors' onClick={config.onClose}>
-            Cancel
-          </button>
-          <button className={'px-5 py-2 rounded border-none cursor-pointer text-sm font-medium transition-colors bg-accent hover:bg-hover'} onClick={config.onConfirm}>
-            {config.confirmLabel ?? 'OK'}
-          </button>
+          <Button text='Cancel' type='Outline' onClick={config.onClose} />
+          <Button text={config.confirmLabel ?? 'OK'} onClick={config.onConfirm} />
         </div>
       </div>
     </div>
