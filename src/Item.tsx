@@ -24,7 +24,7 @@ export function Item({ item, itemIndex, colIndex, boardIndex, done }: ItemProps)
         }}
         className='text-sm word-break-break-word'
       />
-      {!done && colIndex == 0 && (
+      {!done && colIndex === 0 && (
         <button className='text-text cursor-pointer size-7 hover:text-accent' onClick={() => store.finishItem(boardIndex, colIndex, itemIndex)} title='Done'>
           ✓
         </button>

@@ -4,36 +4,36 @@ import type { Board as BoardType } from './types'
 import { EditableText } from './EditableText'
 import { Column } from './Column'
 import { DeleteButton } from './DeleteButton'
+import { BoardPicker } from './BoardPicker'
 
 interface BoardProps {
-  board: BoardType
   boardIndex: number
-  onRename: (name: string) => void
-  onDelete: () => void
+  boards: BoardType[]
   onSave: () => void
+  onImport: () => void
+  onActivate: (index: number) => void
+  onDelete: (index: number) => void
 }
 
-export function Board({ board, boardIndex, onRename, onDelete, onSave }: BoardProps) {
+export function Board({ boardIndex, boards, onDelete, onSave, onActivate, onImport }: BoardProps) {
   const [dropColIndex, setDropColIndex] = useState<number | null>(null)
   const [dropItemIndex, setDropItemIndex] = useState<number | null>(null)
-
+  const board = boards[boardIndex]
   return (
     <div className='flex flex-col h-full'>
-      <div className='flex items-center gap-2 p-3 mb-4 border-b-2 border-card'>
-        <EditableText value={board.name} onSave={(name) => onRename(name)} className='text-2xl font-bold px-2 py-1 focus:bg-card' />
-        <button
-          className='px-6 py-1.5 rounded-lg border-2 border-dashed border-card text-text bg-transparent cursor-pointer text-sm hover:border-accent hover:text-accent transition-colors'
-          onClick={() => store.addColumn(-1)}
-        >
+      <div className='flex items-center gap-2 p-3 border-b-2 border-card'>
+        <BoardPicker boards={boards} activeBoardIndex={boardIndex} onActivate={onActivate} onImport={onImport} onDelete={onDelete} />
+        <EditableText value={board.name} onSave={(name) => store.renameBoard(boardIndex, name)} className='text-2xl font-bold px-2 py-1 focus:bg-card' />
+        <button className='p-2 rounded border-2 border-accent text-text cursor-pointer hover:bg-accent' onClick={() => store.addColumn(-1)}>
           + Column
         </button>
-        <button className='px-3.5 py-1.5 rounded-md border border-white/20 bg-card text-text cursor-pointer text-sm hover:border-accent hover:text-accent' onClick={onSave}>
+        <button className='p-2 rounded border-2 border-accent text-text cursor-pointer hover:bg-accent' onClick={onSave}>
           Save
         </button>
-        <DeleteButton onClick={onDelete} />
+        <DeleteButton onClick={() => onDelete(boardIndex)} />
       </div>
 
-      <div className='flex-1 flex gap-3 overflow-x-auto px-2 pb-4 items-start'>
+      <div className='flex flex-wrap gap-3 p-3 items-start'>
         {board.columns.map((col, index) => (
           <Column
             key={index}

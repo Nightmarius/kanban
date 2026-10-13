@@ -20,11 +20,6 @@ function AppContent() {
 
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
-  const activeBoardIndexRef = useRef(activeBoardIndex)
-  useEffect(() => {
-    activeBoardIndexRef.current = activeBoardIndex
-  }, [activeBoardIndex])
-
   const activeBoard = data.boards[activeBoardIndex] ?? null
 
   function handleImport(text: string) {
@@ -43,25 +38,17 @@ function AppContent() {
   }
 
   function handleSave() {
-    const board = data.boards[activeBoardIndexRef.current] ?? null
-    saveAsFile(formatBoardAsMd(board!), board?.name)
+    saveAsFile(formatBoardAsMd(activeBoard!), activeBoard?.name)
   }
 
-  async function handleDeleteActiveBoard() {
-    const currentIndex = activeBoardIndexRef.current
-    const board = data.boards[currentIndex] ?? null
-    if (!board) return
-    await handleDeleteBoardFromPicker(currentIndex, board.name)
-  }
-
-  async function handleDeleteBoardFromPicker(boardIndex: number, boardName: string) {
+  async function deleteBoard(index: number) {
     const confirmed = await showConfirm({
       title: 'Delete Board',
-      message: `Are you sure you want to delete "${boardName}" with all contained columns and items? This action can not be undone.`,
+      message: `Are you sure you want to delete "${data.boards[index].name}" with all contained columns and items? This action can not be undone.`,
       confirmLabel: 'Delete',
     })
     if (!confirmed) return
-    const nextIndex = store.deleteBoard(boardIndex)
+    const nextIndex = store.deleteBoard(index)
     if (nextIndex !== null) setActiveBoardIndex(nextIndex)
   }
 
@@ -71,13 +58,11 @@ function AppContent() {
 
   return (
     <div className='relative bg-bg main-content'>
-      <BoardPicker
-        boards={data.boards}
-        activeBoardIndex={activeBoardIndex}
-        onActivate={(index: number) => setActiveBoardIndex(index)}
-        onImport={handleNewImportFile}
-        onDelete={handleDeleteBoardFromPicker}
-      />
+      {activeBoard ? (
+        <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
+      ) : (
+        <EmptyState onImport={handleNewImportFile} onCreateBoard={() => { const boardIndex = store.addBoard(); setActiveBoardIndex(boardIndex) }} />
+      )}
       <input
         ref={importInputRef}
         type='file'
@@ -92,17 +77,6 @@ function AppContent() {
           e.target.value = ''
         }}
       />
-      {activeBoard ? (
-        <Board board={activeBoard} boardIndex={activeBoardIndex} onRename={(name: string) => store.renameBoard(activeBoardIndex, name)} onDelete={handleDeleteActiveBoard} onSave={handleSave} />
-      ) : (
-        <EmptyState
-          onImport={handleNewImportFile}
-          onCreateBoard={() => {
-            const boardIndex = store.addBoard()
-            setActiveBoardIndex(boardIndex)
-          }}
-        />
-      )}
     </div>
   )
 }
