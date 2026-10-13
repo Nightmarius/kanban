@@ -4,7 +4,7 @@ import type { Column as ColumnType } from './types'
 import { EditableText } from './EditableText'
 import { Item } from './Item'
 import { showConfirm } from './ConfirmModal'
-import { DeleteButton } from './DeleteButton'
+import { DeleteButton } from './Button'
 
 interface ColumnProps {
   column: ColumnType

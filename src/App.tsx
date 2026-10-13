@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import * as store from './store'
 import type { KanbanData } from './types'
-import { BoardPicker } from './BoardPicker'
 import { Board } from './Board'
 import { ConfirmProvider, showConfirm } from './ConfirmModal'
+import { Button } from './Button'
 
 export function App() {
   return (
@@ -61,7 +61,13 @@ function AppContent() {
       {activeBoard ? (
         <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
       ) : (
-        <EmptyState onImport={handleNewImportFile} onCreateBoard={() => { const boardIndex = store.addBoard(); setActiveBoardIndex(boardIndex) }} />
+        <EmptyState
+          onImport={handleNewImportFile}
+          onCreateBoard={() => {
+            const boardIndex = store.addBoard()
+            setActiveBoardIndex(boardIndex)
+          }}
+        />
       )}
       <input
         ref={importInputRef}
@@ -86,25 +92,8 @@ function EmptyState({ onImport, onCreateBoard }: { onImport: () => void; onCreat
     <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
       <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
       <div className='flex gap-2'>
-        <label className='border-2 border-dashed border-card bg-bg px-8 py-5 text-text rounded-lg text-lg cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent'>
-          Import .md file
-          <input
-            type='file'
-            accept='.md'
-            className='hidden'
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (!file) return
-              const reader = new FileReader()
-              reader.onload = () => onImport()
-              reader.readAsText(file)
-              e.target.value = ''
-            }}
-          />
-        </label>
-        <button className='px-6 py-5 bg-accent text-white border-none rounded-lg cursor-pointer text-lg' onClick={onCreateBoard}>
-          + New Board
-        </button>
+        <Button text='Import .md file' type='Outline' onClick={onImport} />
+        <Button text='+ New Board' onClick={onCreateBoard} />
       </div>
     </div>
   )

@@ -3,8 +3,8 @@ import * as store from './store'
 import type { Board as BoardType } from './types'
 import { EditableText } from './EditableText'
 import { Column } from './Column'
-import { DeleteButton } from './DeleteButton'
 import { BoardPicker } from './BoardPicker'
+import { Button, DeleteButton } from './Button'
 
 interface BoardProps {
   boardIndex: number
@@ -24,12 +24,8 @@ export function Board({ boardIndex, boards, onDelete, onSave, onActivate, onImpo
       <div className='flex items-center gap-2 p-3 border-b-2 border-card'>
         <BoardPicker boards={boards} activeBoardIndex={boardIndex} onActivate={onActivate} onImport={onImport} onDelete={onDelete} />
         <EditableText value={board.name} onSave={(name) => store.renameBoard(boardIndex, name)} className='text-2xl font-bold px-2 py-1 focus:bg-card' />
-        <button className='p-2 rounded border-2 border-accent text-text cursor-pointer hover:bg-accent' onClick={() => store.addColumn(-1)}>
-          + Column
-        </button>
-        <button className='p-2 rounded border-2 border-accent text-text cursor-pointer hover:bg-accent' onClick={onSave}>
-          Save
-        </button>
+        <Button text='+ Column' type='Outline' onClick={() => store.addColumn(-1)} />
+        <Button text='Save' type='Outline' onClick={onSave} />
         <DeleteButton onClick={() => onDelete(boardIndex)} />
       </div>
 
