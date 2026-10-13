@@ -76,10 +76,10 @@ export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemInd
   }
 
   const isTarget = dropColIndex === colIndex
-  const showIndicator = isTarget && dropItemIndex !== null
+  const showIndicator = isTarget && dropItemIndex !== null && dropItemIndex >= column.done
 
   return (
-    <div className='bg-card rounded-lg flex flex-1 flex-col'>
+    <div className='bg-card rounded-lg flex flex-col w-64 shrink-0'>
       <div className='flex p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab'>
         <EditableText
           value={column.name}

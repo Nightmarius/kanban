@@ -1,5 +1,5 @@
 import defaultData from './appData.json' with { type: 'json' }
-import type { Board, KanbanData } from './types'
+import type { KanbanData } from './types'
 
 const STORAGE_KEY = 'data'
 
@@ -101,7 +101,7 @@ export function moveItem(boardIndex: number, fromColIndex: number, toColIndex: n
   const board = state.boards[boardIndex]
   const src = board.columns[fromColIndex]
   const dst = board.columns[toColIndex]
-  if (!src || !dst || dst.done > toItemIndex) return
+  if (!src || !dst || dst.done < toItemIndex) return
   const item = src.items[fromItemIndex]
   src.items.splice(fromItemIndex, 1)
   dst.items.splice(toItemIndex, 0, item)
@@ -126,9 +126,8 @@ export function finishItem(boardIndex: number, colIndex: number, itemIndex: numb
   const board = state.boards[boardIndex]
   if (!board || !board.columns[colIndex]) return
   const col = board.columns[colIndex]
-  if (col.done < itemIndex) {
+  if (col.done++ < itemIndex) {
     moveItem(boardIndex, colIndex, colIndex, itemIndex, col.done - 1)
-    col.done++
   } else {
     notify()
   }
