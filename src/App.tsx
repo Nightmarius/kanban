@@ -15,12 +15,17 @@ export function App() {
 
 function AppContent() {
   const [data, setData] = useState<KanbanData>(() => store.getState())
-  const [activeBoardId, setActiveBoardId] = useState<string | null>(data.boards[0]?.id ?? null)
+  const [activeBoardIndex, setActiveBoardIndex] = useState<number>(0)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
-  const activeBoard = data.boards.find((b) => b.id === activeBoardId) ?? null
+  const activeBoardIndexRef = useRef(activeBoardIndex)
+  useEffect(() => {
+    activeBoardIndexRef.current = activeBoardIndex
+  }, [activeBoardIndex])
+
+  const activeBoard = data.boards[activeBoardIndex] ?? null
 
   function handleImport(text: string) {
     try {
@@ -29,7 +34,7 @@ function AppContent() {
         alert('No boards found in file.')
         return
       }
-      setActiveBoardId(parsed.boards[0]?.id ?? null)
+      setActiveBoardIndex(data.boards.length)
       store.importFromJSON(parsed)
     } catch (e) {
       console.error(e)
@@ -38,23 +43,26 @@ function AppContent() {
   }
 
   function handleSave() {
-    saveAsFile(formatBoardAsMd(activeBoard!), activeBoard?.name)
+    const board = data.boards[activeBoardIndexRef.current] ?? null
+    saveAsFile(formatBoardAsMd(board!), board?.name)
   }
 
   async function handleDeleteActiveBoard() {
-    if (!activeBoard) return
-    handleDeleteBoardFromPicker(activeBoard.id, activeBoard.name)
+    const currentIndex = activeBoardIndexRef.current
+    const board = data.boards[currentIndex] ?? null
+    if (!board) return
+    await handleDeleteBoardFromPicker(currentIndex, board.name)
   }
 
-  async function handleDeleteBoardFromPicker(boardId: string, boardName: string) {
-    if (!activeBoard) return
+  async function handleDeleteBoardFromPicker(boardIndex: number, boardName: string) {
     const confirmed = await showConfirm({
       title: 'Delete Board',
       message: `Are you sure you want to delete "${boardName}" with all contained columns and items? This action can not be undone.`,
       confirmLabel: 'Delete',
     })
-    const nextId = store.deleteBoard(boardId)
-    if (nextId) setActiveBoardId(nextId)
+    if (!confirmed) return
+    const nextIndex = store.deleteBoard(boardIndex)
+    if (nextIndex !== null) setActiveBoardIndex(nextIndex)
   }
 
   function handleNewImportFile() {
@@ -63,7 +71,13 @@ function AppContent() {
 
   return (
     <div className='relative bg-bg main-content'>
-      <BoardPicker boards={data.boards} activeBoardId={activeBoardId} onActivate={(id) => setActiveBoardId(id)} onImport={handleNewImportFile} onDelete={handleDeleteBoardFromPicker} />
+      <BoardPicker
+        boards={data.boards}
+        activeBoardIndex={activeBoardIndex}
+        onActivate={(index: number) => setActiveBoardIndex(index)}
+        onImport={handleNewImportFile}
+        onDelete={handleDeleteBoardFromPicker}
+      />
       <input
         ref={importInputRef}
         type='file'
@@ -79,13 +93,13 @@ function AppContent() {
         }}
       />
       {activeBoard ? (
-        <Board board={activeBoard} onRename={(name: string) => store.renameBoard(activeBoard.id, name)} onDelete={handleDeleteActiveBoard} onSave={handleSave} />
+        <Board board={activeBoard} boardIndex={activeBoardIndex} onRename={(name: string) => store.renameBoard(activeBoardIndex, name)} onDelete={handleDeleteActiveBoard} onSave={handleSave} />
       ) : (
         <EmptyState
           onImport={handleNewImportFile}
           onCreateBoard={() => {
-            const newBoard = store.addBoard()
-            setActiveBoardId(newBoard.id)
+            const boardIndex = store.addBoard()
+            setActiveBoardIndex(boardIndex)
           }}
         />
       )}
@@ -176,8 +190,8 @@ export function parseBoardFromMd(text: string): KanbanData {
       if (!headerContent) continue
 
       let colName: string
-      const braceIdx = headerContent.indexOf('{')
-      colName = braceIdx > 0 ? headerContent.slice(0, braceIdx).trim() : headerContent.trim()
+      const braceIndex = headerContent.indexOf('{')
+      colName = braceIndex > 0 ? headerContent.slice(0, braceIndex).trim() : headerContent.trim()
 
       let done = 0
       let offset = 1
@@ -221,14 +235,12 @@ export function parseBoardFromMd(text: string): KanbanData {
     }
   }
 
-  const boards = [] as Array<{ id: string; name: string; columns: Array<{ id: string; name: string; done: number; items: string[] }> }>
+  const boards = [] as Array<{ name: string; columns: Array<{ name: string; done: number; items: string[] }> }>
 
   if (currentBoard) {
     boards.push({
-      id: 'board-' + Date.now(),
       name: currentBoard.name,
-      columns: currentBoard.columns.map((col, idx) => ({
-        id: 'col-' + Date.now() + '-' + idx,
+      columns: currentBoard.columns.map((col) => ({
         name: col.name,
         done: col.done || 0,
         items: col.items,

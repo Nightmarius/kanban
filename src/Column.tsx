@@ -8,60 +8,55 @@ import { DeleteButton } from './DeleteButton'
 
 interface ColumnProps {
   column: ColumnType
-  boardId: string
-  targetColId: string | null
-  dropAboveIdx: number | null
-  onDragOver: (idx: number | null) => void
-  onSetTarget: () => void
+  boardIndex: number
+  colIndex: number
+  dropColIndex: number | null
+  dropItemIndex: number | null
+  onDragOver: (index: number | null) => void
   onClearTarget: () => void
 }
 
-export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver, onSetTarget, onClearTarget }: ColumnProps) {
-  const dropIdxRef = useRef<number | null>(null)
-
+export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemIndex, onDragOver, onClearTarget }: ColumnProps) {
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
-    if (!colIsTarget) onSetTarget()
-
-    const idx = computeDropIndex(e)
-    dropIdxRef.current = idx
-    onDragOver(idx)
+    const index = computeDropItemIndex(e)
+    onDragOver(index)
   }
 
-  function computeDropIndex(e: React.DragEvent<HTMLDivElement>): number | null {
+  function computeDropItemIndex(e: React.DragEvent<HTMLDivElement>): number | null {
     const items = [...e.currentTarget.querySelectorAll('.drop-target')] as HTMLElement[]
-    let idx: number | null = null
+    let index = 0
     for (let i = 0; i < items.length; i++) {
       const rect = items[i].getBoundingClientRect()
       if (e.clientY < rect.top + rect.height / 2) {
-        idx = i
+        index = i
         break
       } else {
-        idx = i + 1
+        index = i + 1
       }
     }
-    return column.items.length > 0 ? idx : null
+    return index
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
     const dragData = e.dataTransfer.getData('text/plain')
-    let sourceItemIdx = -1
-    let sourceColId: string | null = null
+    let sourceColIndex = -1
+    let sourceItemIndex = -1
     if (dragData) {
       try {
-        const { colId, index } = JSON.parse(dragData)
-        sourceColId = colId
-        sourceItemIdx = index
+        const { colIndex, itemIndex } = JSON.parse(dragData)
+        sourceColIndex = colIndex
+        sourceItemIndex = itemIndex
       } catch {
         // ignore parse errors
       }
     }
 
-    const dropIdx = dropIdxRef.current ?? column.items.length
+    const targetIndex = dropItemIndex ?? column.items.length
 
-    if (sourceColId && sourceItemIdx >= 0) {
-      store.moveItem(boardId, sourceColId, column.id, sourceItemIdx, dropIdx)
+    if (sourceColIndex >= 0 && sourceItemIndex >= 0) {
+      store.moveItem(boardIndex, sourceColIndex, colIndex, sourceItemIndex, targetIndex)
     }
     onClearTarget()
   }
@@ -77,11 +72,11 @@ export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver,
       message: `Are you sure you want to delete column "${column.name}" and all contained items? This action can not be undone.`,
       confirmLabel: 'Delete',
     })
-    if (confirmed) store.deleteColumn(boardId, column.id)
+    if (confirmed) store.deleteColumn(boardIndex, colIndex)
   }
 
-  const colIsTarget = targetColId === column.id
-  const showIndicator = colIsTarget && dropAboveIdx !== null
+  const isTarget = dropColIndex === colIndex
+  const showIndicator = isTarget && dropItemIndex !== null
 
   return (
     <div className='bg-card rounded-lg flex flex-1 flex-col'>
@@ -89,7 +84,7 @@ export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver,
         <EditableText
           value={column.name}
           onSave={(name) => {
-            if (name.trim()) store.renameColumn(boardId, column.id, name.trim())
+            if (name.trim()) store.renameColumn(boardIndex, colIndex, name.trim())
           }}
           className='font-semibold'
         />
@@ -97,17 +92,17 @@ export function Column({ column, boardId, targetColId, dropAboveIdx, onDragOver,
       </div>
 
       <div className='flex-1 min-h-7 overflow-y-auto p-2 flex flex-col gap-1.5' onDragOver={handleDragOver} onDrop={handleDrop} onDragLeave={handleDragLeave}>
-        {showIndicator && dropAboveIdx === 0 && <div className='h-0.75 rounded bg-accent shadow-lg z-20 pointer-events-none' />}
+        {showIndicator && dropItemIndex === 0 && <div className='h-1 rounded bg-accent z-20 pointer-events-none' />}
 
-        {column.items.map((item, idx) => (
-          <>
-            <Item key={'item-' + idx} item={item} index={idx} colId={column.id} boardId={boardId} done={column.done > idx} />
-            {showIndicator && dropAboveIdx === idx + 1 && <div className='h-0.75 rounded bg-accent shadow-lg z-20 pointer-events-none' />}
-          </>
+        {column.items.map((item, index) => (
+          <div key={'item-' + index}>
+            <Item item={item} boardIndex={boardIndex} colIndex={colIndex} itemIndex={index} done={column.done > index} />
+            {showIndicator && dropItemIndex === index + 1 && <div className='mt-2 h-1 rounded bg-accent z-20 pointer-events-none' />}
+          </div>
         ))}
       </div>
 
-      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer' onClick={() => store.addItem(boardId, column.id)}>
+      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer' onClick={() => store.addItem(boardIndex, colIndex)}>
         + Add item
       </button>
     </div>

@@ -1,5 +1,5 @@
 import defaultData from './appData.json' with { type: 'json' }
-import type { Board, Column, KanbanData } from './types'
+import type { Board, KanbanData } from './types'
 
 const STORAGE_KEY = 'data'
 
@@ -45,41 +45,36 @@ export function exportAsJSON(): string {
   return JSON.stringify(state, null, 2)
 }
 
-export function addBoard(): Board {
+export function addBoard(): number {
   const board = structuredClone(defaultData).boards[0]
   state.boards.push(board)
   notify()
-  return board
+  return state.boards.length - 1
 }
 
-export function deleteBoard(id: string): string | null {
-  const idx = state.boards.findIndex((b) => b.id === id)
-  state.boards = state.boards.filter((b) => b.id !== id)
-  let nextBoardId: string | null = null
-  if (idx > 0) {
-    nextBoardId = state.boards[idx - 1]?.id ?? null
+export function deleteBoard(boardIndex: number): number | null {
+  state.boards.splice(boardIndex, 1)
+  let nextBoardIndex: number | null = null
+  if (boardIndex > 0) {
+    nextBoardIndex = boardIndex - 1
   } else if (state.boards.length > 0) {
-    nextBoardId = state.boards[0].id
+    nextBoardIndex = 0
   }
   notify()
-  return nextBoardId
+  return nextBoardIndex
 }
 
-export function renameBoard(id: string, name: string) {
-  const board = state.boards.find((b) => b.id === id)
-  if (board) board.name = name
+export function renameBoard(boardIndex: number, name: string) {
+  const board = state.boards[boardIndex]
+  if (!board) return
+  board.name = name
   notify()
 }
 
-function findBoard(id: string): Board | undefined {
-  return state.boards.find((b) => b.id === id)
-}
-
-export function addColumn(boardId: string) {
-  const board = findBoard(boardId)
+export function addColumn(boardIndex: number) {
+  const board = state.boards[boardIndex]
   if (!board) return
   board.columns.push({
-    id: 'col-' + Date.now(),
     name: '',
     done: 0,
     items: [],
@@ -87,74 +82,62 @@ export function addColumn(boardId: string) {
   notify()
 }
 
-export function renameColumn(boardId: string, colId: string, name: string) {
-  const board = findBoard(boardId)
+export function renameColumn(boardIndex: number, colIndex: number, name: string) {
+  const board = state.boards[boardIndex]
   if (!board) return
-  const col = board.columns.find((c) => c.id === colId)
+  const col = board.columns[colIndex]
   if (col) col.name = name
   notify()
 }
 
-export function deleteColumn(boardId: string, colId: string) {
-  const board = findBoard(boardId)
+export function deleteColumn(boardIndex: number, colIndex: number) {
+  const board = state.boards[boardIndex]
   if (!board) return
-  board.columns = board.columns.filter((c) => c.id !== colId)
+  board.columns.splice(colIndex, 1)
   notify()
 }
 
-export function moveColumn(boardId: string, fromIdx: number, toIdx: number) {
-  const board = findBoard(boardId)
-  if (!board || toIdx < 0 || toIdx >= board.columns.length) return
-  const column = board.columns[fromIdx]
-  board.columns.splice(fromIdx, 1)
-  board.columns.splice(toIdx, 0, column)
-  notify()
-}
-
-function findColumn(boardId: string, colId: string): Column | null {
-  const board = findBoard(boardId)
-  if (!board) return null
-  return board.columns.find((c) => c.id === colId) || null
-}
-
-export function moveItem(boardId: string, fromColId: string, toColId: string, fromItemIndex: number, toItemIndex?: number) {
-  const src = findColumn(boardId, fromColId)
-  const dst = findColumn(boardId, toColId)
-  if (!src || !dst || toItemIndex == null || dst.done > toItemIndex) return
+export function moveItem(boardIndex: number, fromColIndex: number, toColIndex: number, fromItemIndex: number, toItemIndex: number) {
+  const board = state.boards[boardIndex]
+  const src = board.columns[fromColIndex]
+  const dst = board.columns[toColIndex]
+  if (!src || !dst || dst.done > toItemIndex) return
   const item = src.items[fromItemIndex]
   src.items.splice(fromItemIndex, 1)
   dst.items.splice(toItemIndex, 0, item)
   notify()
 }
 
-export function addItem(boardId: string, colId: string) {
-  const col = findColumn(boardId, colId)
-  if (!col) return
-  col.items.push('')
+export function addItem(boardIndex: number, colIndex: number) {
+  const board = state.boards[boardIndex]
+  if (!board || !board.columns[colIndex]) return
+  board.columns[colIndex].items.push('')
   notify()
 }
 
-export function updateItem(boardId: string, colId: string, itemIndex: number, text: string) {
-  const col = findColumn(boardId, colId)
-  if (!col) return
-  col.items[itemIndex] = text
+export function updateItem(boardIndex: number, colIndex: number, itemIndex: number, text: string) {
+  const board = state.boards[boardIndex]
+  if (!board || !board.columns[colIndex]) return
+  board.columns[colIndex].items[itemIndex] = text
   notify()
 }
 
-export function finishItem(boardId: string, colId: string, itemIndex: number) {
-  const col = findColumn(boardId, colId)
-  if (!col) return
+export function finishItem(boardIndex: number, colIndex: number, itemIndex: number) {
+  const board = state.boards[boardIndex]
+  if (!board || !board.columns[colIndex]) return
+  const col = board.columns[colIndex]
   if (col.done < itemIndex) {
-    moveItem(boardId, colId, colId, itemIndex, col.done - 1)
+    moveItem(boardIndex, colIndex, colIndex, itemIndex, col.done - 1)
     col.done++
   } else {
     notify()
   }
 }
 
-export function deleteItem(boardId: string, colId: string, itemIndex: number) {
-  const col = findColumn(boardId, colId)
-  if (!col) return
+export function deleteItem(boardIndex: number, colIndex: number, itemIndex: number) {
+  const board = state.boards[boardIndex]
+  if (!board || !board.columns[colIndex]) return
+  const col = board.columns[colIndex]
   if (col.done > itemIndex) col.done--
   col.items.splice(itemIndex, 1)
   notify()
