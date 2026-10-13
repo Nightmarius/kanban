@@ -4,35 +4,32 @@ import { DeleteButton } from './DeleteButton'
 
 interface ItemProps {
   item: string
-  index: number
-  colId: string
-  boardId: string
+  itemIndex: number
+  colIndex: number
+  boardIndex: number
   done: boolean
 }
 
-export function Item({ item, index, colId, boardId, done }: ItemProps) {
+export function Item({ item, itemIndex, colIndex, boardIndex, done }: ItemProps) {
   return (
     <div
-      className={'rounded-sm p-3 text-sm leading-relaxed flex items-start gap-2 select-none drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
+      className={'rounded-sm px-3 py-1 flex items-center gap-2 drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
       draggable={!done}
-      onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ colId, index }))}
+      onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ colIndex, itemIndex }))}
     >
       <EditableText
         value={item}
         onSave={(text) => {
-          console.log(text)
-          if (text.trim()) store.updateItem(boardId, colId, index, text)
+          if (text.trim()) store.updateItem(boardIndex, colIndex, itemIndex, text)
         }}
         className='text-sm word-break-break-word'
       />
-      <div className='flex gap-x-0.5'>
-        {!done && colId == 0 && (
-          <button className='text-text cursor-pointer size-6' onClick={() => store.finishItem(boardId, colId, index)} title='Done'>
-            ✓
-          </button>
-        )}
-        <DeleteButton onClick={() => store.deleteItem(boardId, colId, index)} />
-      </div>
+      {!done && colIndex == 0 && (
+        <button className='text-text cursor-pointer size-7 hover:text-accent' onClick={() => store.finishItem(boardIndex, colIndex, itemIndex)} title='Done'>
+          ✓
+        </button>
+      )}
+      <DeleteButton onClick={() => store.deleteItem(boardIndex, colIndex, itemIndex)} />
     </div>
   )
 }

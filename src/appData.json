@@ -1,12 +1,11 @@
 {
   "boards": [
     {
-      "id": "board",
       "name": "New Board",
       "columns": [
-        { "id": "col-todo", "name": "To Do", "done": 0, "items": ["Plan the project"] },
-        { "id": "col-doing", "name": "Doing", "done": 0, "items": ["Setting up the board"] },
-        { "id": "col-done", "name": "Done", "done": 0, "items": ["Launch the board"] }
+        { "name": "To Do", "done": 0, "items": ["Plan the project"] },
+        { "name": "Doing", "done": 0, "items": ["Setting up the board"] },
+        { "name": "Done", "done": 0, "items": ["Launch the board"] }
       ]
     }
   ]
