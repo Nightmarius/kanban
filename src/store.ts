@@ -104,7 +104,8 @@ export function moveItem(boardIndex: number, fromColIndex: number, toColIndex: n
   const board = state.boards[boardIndex]
   const src = board.columns[fromColIndex]
   const dst = board.columns[toColIndex]
-  if (!src || !dst || dst.done < toItemIndex) return
+  if (!src || !dst || dst.done > toItemIndex) return
+  if(fromColIndex === toColIndex && fromItemIndex < toItemIndex) toItemIndex--;
   const item = src.items[fromItemIndex]
   src.items.splice(fromItemIndex, 1)
   dst.items.splice(toItemIndex, 0, item)
