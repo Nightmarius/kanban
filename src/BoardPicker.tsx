@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import * as store from './store'
-import type { Board } from './types'
+import type { BoardType } from './types'
 import { DeleteButton } from './Button'
 import { Button } from './Button'
 
 interface BoardPickerProps {
-  boards: Board[]
+  boards: BoardType[]
   activeBoardIndex: number | null
   onActivate: (index: number) => void
   onImport: () => void
@@ -15,8 +15,8 @@ interface BoardPickerProps {
 export function BoardPicker({ boards, activeBoardIndex, onActivate, onImport, onDelete }: BoardPickerProps) {
   const [open, setOpen] = useState(false)
   function onNewBoard() {
-    const boardIndex = store.addBoard()
-    onActivate(boardIndex)
+    onActivate(boards.length)
+    store.addBoard()
     setOpen(false)
   }
 

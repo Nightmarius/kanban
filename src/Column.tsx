@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import * as store from './store'
-import type { Column as ColumnType } from './types'
+import type { ColumnType as ColumnType } from './types'
 import { EditableText } from './EditableText'
 import { Item } from './Item'
 import { showConfirm } from './ConfirmModal'

@@ -1,5 +1,5 @@
 import defaultData from './appData.json' with { type: 'json' }
-import type { KanbanData, Board } from './types'
+import type { KanbanData, BoardType } from './types'
 
 const STORAGE_KEY = 'data'
 
@@ -36,23 +36,16 @@ export function getState(): KanbanData {
   return structuredClone(state)
 }
 
-export function importFromJSON(json: KanbanData) {
-  state.boards.push(...json.boards)
-  notify()
-}
-
 export function exportAsJSON(): string {
   return JSON.stringify(state, null, 2)
 }
 
-export function addBoard(): number {
-  const board = {
+export function addBoard(board?: BoardType) {
+  state.boards.push(board ?? {
     name: 'Untitled',
     columns: [],
-  }
-  state.boards.push(board)
+  })
   notify()
-  return state.boards.length - 1
 }
 
 export function deleteBoard(boardIndex: number): number | null {

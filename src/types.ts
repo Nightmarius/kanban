@@ -1,14 +1,14 @@
-export interface Column {
+export interface ColumnType {
   name: string
   done: number
   items: string[]
 }
 
-export interface Board {
+export interface BoardType {
   name: string
-  columns: Column[]
+  columns: ColumnType[]
 }
 
 export interface KanbanData {
-  boards: Board[]
+  boards: BoardType[]
 }

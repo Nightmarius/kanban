@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import * as store from './store'
-import type { Board as BoardType } from './types'
+import type { BoardType as BoardType } from './types'
 import { EditableText } from './EditableText'
 import { Column } from './Column'
 import { BoardPicker } from './BoardPicker'
