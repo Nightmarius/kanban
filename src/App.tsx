@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import * as store from './store'
-import type { ColumnType, BoardType, KanbanData } from './types'
+import type { BoardType, KanbanData } from './types'
 import { Board } from './Board'
 import { ConfirmProvider, showConfirm } from './ConfirmModal'
 import { Button } from './Button'
-import { Column } from './Column'
 
 export function App() {
   return (
@@ -23,19 +22,59 @@ function AppContent() {
 
   const activeBoard = data.boards[activeBoardIndex] ?? null
 
-  function handleImport(text: string) {
+  function handleImport(name: string, text: string) {
     try {
       const board = parseBoardFromMd(text)
-      if (!board?.name) {
-        alert('No boards found in file.')
-        return
-      }
+      board.name = name.slice(0, -3)
       setActiveBoardIndex(data.boards.length)
       store.addBoard(board)
     } catch (e) {
       console.error(e)
       alert('Invalid kanban .md file.')
     }
+  }
+
+  function formatBoardAsMd(board: BoardType): string {
+    return [
+      ...board.columns
+        .map((col) => {
+          const lines: string[] = [`# ${col.name}`, '']
+          for (let i = 0; i < col.items.length; i++) {
+            lines.push(`- [${i < col.done ? 'x' : ' '}] ${col.items[i]}`)
+          }
+          lines.push('')
+          return lines
+        })
+        .flat(),
+    ].join('\n')
+  }
+
+  function saveAsFile(content: string, filename?: string) {
+    const blob = new Blob([content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || 'board.md'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function parseBoardFromMd(text: string): BoardType {
+    const lines = text.split('\n')
+    let board: BoardType | null = { name: 'None', columns: [] }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      if (board && line.startsWith('# ')) {
+        const name = line.slice(2).trim()
+        board.columns.push({ name, done: 0, items: [] })
+      } else if (board && line.startsWith('- [')) {
+        if (line.startsWith('- [x')) board.columns[board.columns.length - 1].done++
+        const text = line.slice(5).trim()
+        board.columns[board.columns.length - 1].items.push(text)
+      }
+    }
+    return board
   }
 
   function handleSave() {
@@ -62,13 +101,19 @@ function AppContent() {
       {activeBoard ? (
         <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
       ) : (
-        <EmptyState
-          onImport={handleNewImportFile}
-          onCreateBoard={() => {
-            setActiveBoardIndex(data.boards.length)
-            store.addBoard()
-          }}
-        />
+        <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
+          <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
+          <div className='flex gap-2'>
+            <Button text='Import .md' type='Outline' onClick={handleNewImportFile} />
+            <Button
+              text='Add New Board'
+              onClick={() => {
+                setActiveBoardIndex(data.boards.length)
+                store.addBoard()
+              }}
+            />
+          </div>
+        </div>
       )}
       <input
         ref={importInputRef}
@@ -79,71 +124,11 @@ function AppContent() {
           const file = e.target.files?.[0]
           if (!file) return
           const reader = new FileReader()
-          reader.onload = () => handleImport(reader.result as string)
+          reader.onload = () => handleImport(file.name, reader.result as string)
           reader.readAsText(file)
           e.target.value = ''
         }}
       />
     </div>
   )
-}
-
-function EmptyState({ onImport, onCreateBoard }: { onImport: () => void; onCreateBoard: () => void }) {
-  return (
-    <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
-      <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
-      <div className='flex gap-2'>
-        <Button text='Import .md' type='Outline' onClick={onImport} />
-        <Button text='Add New Board' onClick={onCreateBoard} />
-      </div>
-    </div>
-  )
-}
-
-function formatBoardAsMd(board: BoardType): string {
-  return [
-    `# ${board.name}`,
-    '',
-    ...board.columns
-      .map((col) => {
-        const lines: string[] = [`## ${col.name}`, '']
-        for (let i = 0; i < col.items.length; i++) {
-          lines.push(`- [${i < col.done ? 'x' : ' '}] ${col.items[i]}`)
-        }
-        lines.push('')
-        return lines
-      })
-      .flat(),
-  ].join('\n')
-}
-
-function saveAsFile(content: string, filename?: string) {
-  const blob = new Blob([content], { type: 'text/markdown' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename || 'board.md'
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-export function parseBoardFromMd(text: string): BoardType| null {
-  const lines = text.split('\n')
-  let board: BoardType | null = null
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (line.startsWith('# ') && board === null) {
-      const name = line.slice(2).trim()
-      board = { name, columns: [] }
-    } else if (board && line.startsWith('## ')) {
-      const name = line.slice(2).trim()
-      board.columns.push({name, done:0, items:[]})
-    } else if (board && line.startsWith('- [')) {
-      if(line.startsWith('- [x')) board.columns[board.columns.length-1].done++
-      const text = line.slice(5).trim()
-      board.columns[board.columns.length-1].items.push(text)
-    }
-  }
-  return board
 }
