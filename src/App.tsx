@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import * as store from './store'
-import type { KanbanData } from './types'
+import type { ColumnType, BoardType, KanbanData } from './types'
 import { Board } from './Board'
 import { ConfirmProvider, showConfirm } from './ConfirmModal'
 import { Button } from './Button'
+import { Column } from './Column'
 
 export function App() {
   return (
@@ -24,13 +25,13 @@ function AppContent() {
 
   function handleImport(text: string) {
     try {
-      const parsed = parseBoardFromMd(text)
-      if (!parsed.boards?.length) {
+      const board = parseBoardFromMd(text)
+      if (!board?.name) {
         alert('No boards found in file.')
         return
       }
       setActiveBoardIndex(data.boards.length)
-      store.importFromJSON(parsed)
+      store.addBoard(board)
     } catch (e) {
       console.error(e)
       alert('Invalid kanban .md file.')
@@ -64,8 +65,8 @@ function AppContent() {
         <EmptyState
           onImport={handleNewImportFile}
           onCreateBoard={() => {
-            const boardIndex = store.addBoard()
-            setActiveBoardIndex(boardIndex)
+            setActiveBoardIndex(data.boards.length)
+            store.addBoard()
           }}
         />
       )}
@@ -99,28 +100,15 @@ function EmptyState({ onImport, onCreateBoard }: { onImport: () => void; onCreat
   )
 }
 
-function formatBoardAsMd(board: { name: string; columns: Array<{ name: string; items: Array<any>; done?: number }> }): string {
+function formatBoardAsMd(board: BoardType): string {
   return [
     `# ${board.name}`,
     '',
     ...board.columns
       .map((col) => {
-        const doneItems = typeof col.done === 'number' ? Math.min(col.done, col.items.length) : 0
-        const lines: string[] = [`## ${col.name}`]
-        if (doneItems > 0) {
-          lines.push(`<!-- done:${doneItems} -->`)
-          lines.push('')
-        } else {
-          lines.push('')
-        }
+        const lines: string[] = [`## ${col.name}`, '']
         for (let i = 0; i < col.items.length; i++) {
-          const item = col.items[i]
-          const text = typeof item === 'string' ? item : item.text || ''
-          if (typeof col.done === 'number' && i < col.done) {
-            lines.push(`- [x] ${text}`)
-          } else {
-            lines.push(`- ${text}`)
-          }
+          lines.push(`- [${i < col.done ? 'x' : ' '}] ${col.items[i]}`)
         }
         lines.push('')
         return lines
@@ -139,77 +127,23 @@ function saveAsFile(content: string, filename?: string) {
   URL.revokeObjectURL(url)
 }
 
-export function parseBoardFromMd(text: string): KanbanData {
+export function parseBoardFromMd(text: string): BoardType| null {
   const lines = text.split('\n')
-  let currentBoard: { name: string; columns: Array<{ name: string; items: Array<string>; done?: number }> } | null = null
+  let board: BoardType | null = null
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim()
-
-    if (line.startsWith('# ') && !currentBoard) {
-      currentBoard = { name: line.slice(2).trim(), columns: [] }
-    } else if (currentBoard && /^##/.test(line)) {
-      const headerContent = line.slice(2).trim()
-      if (!headerContent) continue
-
-      let colName: string
-      const braceIndex = headerContent.indexOf('{')
-      colName = braceIndex > 0 ? headerContent.slice(0, braceIndex).trim() : headerContent.trim()
-
-      let done = 0
-      let offset = 1
-      const nextLine = lines[i + 1]?.trim() ?? ''
-      if (nextLine.match(/^<!--\s*done:(\d+)-->$/)) {
-        const match = nextLine.match(/<!--\s*done:(\d+)-->/)
-        done = parseInt(match![1], 10)
-        offset = 2
-      }
-
-      i += offset
-
-      const items: Array<string> = []
-      while (i < lines.length) {
-        const next = lines[i].trim()
-
-        if (!next || /^<!--/.test(next)) {
-          i++
-          continue
-        }
-        if (/^##/.test(next)) break
-        if (!/^\- /.test(next) && !/^- /.test(next)) {
-          i++
-          continue
-        }
-
-        let itemText: string
-        if (next.startsWith('- [x] ') || next.startsWith('- [X] ')) {
-          itemText = next.slice(6).trim()
-        } else if (next.startsWith('- [ ] ')) {
-          itemText = next.slice(6).trim()
-        } else {
-          itemText = next.slice(2).trim()
-        }
-        items.push(itemText)
-        i++
-      }
-
-      if (items.length > 0 && items[items.length - 1] === '') items.pop()
-      currentBoard.columns.push({ name: colName, done, items })
+    const line = lines[i]
+    if (line.startsWith('# ') && board === null) {
+      const name = line.slice(2).trim()
+      board = { name, columns: [] }
+    } else if (board && line.startsWith('## ')) {
+      const name = line.slice(2).trim()
+      board.columns.push({name, done:0, items:[]})
+    } else if (board && line.startsWith('- [')) {
+      if(line.startsWith('- [x')) board.columns[board.columns.length-1].done++
+      const text = line.slice(5).trim()
+      board.columns[board.columns.length-1].items.push(text)
     }
   }
-
-  const boards = [] as Array<{ name: string; columns: Array<{ name: string; done: number; items: string[] }> }>
-
-  if (currentBoard) {
-    boards.push({
-      name: currentBoard.name,
-      columns: currentBoard.columns.map((col) => ({
-        name: col.name,
-        done: col.done || 0,
-        items: col.items,
-      })),
-    })
-  }
-
-  return { boards }
+  return board
 }
