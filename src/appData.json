@@ -3,9 +3,9 @@
     {
       "name": "New Board",
       "columns": [
-        { "name": "To Do", "done": 0, "items": ["Plan the project"] },
-        { "name": "Doing", "done": 0, "items": ["Setting up the board"] },
-        { "name": "Done", "done": 0, "items": ["Launch the board"] }
+        { "name": "To Do", "done": 1, "items": ["Launch the board", "Setting up the board"] },
+        { "name": "Tomorrow", "done": 0, "items": ["Plan the project"] },
+        { "name": "Might never", "done": 0, "items": ["Finish the project"] }
       ]
     }
   ]
