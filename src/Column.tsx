@@ -67,12 +67,16 @@ export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemInd
     onClearTarget()
   }
   async function onDelete() {
-    const confirmed = await showConfirm({
-      title: `Delete ${column.name}`,
-      message: `Are you sure you want to delete column "${column.name}" and all contained items? This action can not be undone.`,
-      confirmLabel: 'Delete',
-    })
-    if (confirmed) store.deleteColumn(boardIndex, colIndex)
+    const shouldConfirm = column.items.length > 0
+    if (shouldConfirm) {
+      const confirmed = await showConfirm({
+        title: `Delete ${column.name}`,
+        message: `Are you sure you want to delete column "${column.name}" and all contained items? This action can not be undone.`,
+        confirmLabel: 'Delete',
+      })
+      if (!confirmed) return
+    }
+    store.deleteColumn(boardIndex, colIndex)
   }
 
   const isTarget = dropColIndex === colIndex

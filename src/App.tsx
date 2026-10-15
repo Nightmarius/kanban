@@ -32,10 +32,10 @@ function AppContent() {
 
   useEffect(() => {
     if (isElectron) {
-      window.electronAPI.onFileOpened(async (fileData) => {
+      window.electronAPI?.onFileOpened(async (fileData) => {
         try {
-          const content = await window.electronAPI.readFile(fileData.path)
-          handleImport(fileData.path, content)
+          const content = await window.electronAPI?.readFile(fileData.path)
+          if (content) handleImport(fileData.path, content)
         } catch (e) {
           console.error(e)
           alert('Failed to read file.')
@@ -47,19 +47,19 @@ function AppContent() {
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
   const activeBoard = data.boards[activeBoardIndex] ?? null
-  
+
   // Autosave debounce: throttle writes to same file to max once per second
-  const autosaveState = useRef<{lastSaveTime: number; lastBoardContent: string}>({
+  const autosaveState = useRef<{ lastSaveTime: number; lastBoardContent: string }>({
     lastSaveTime: 0,
-    lastBoardContent: ''
+    lastBoardContent: '',
   })
 
   useEffect(() => {
     if (!isElectron || !activeBoard?.savedPath) return
-    
+
     // Format current content
     const content = formatBoardAsMd(activeBoard)
-    
+
     throttleAutosave(activeBoard.savedPath, content, autosaveState.current)
   })
 
@@ -68,17 +68,17 @@ function AppContent() {
     if (state.lastBoardContent === content && Date.now() - state.lastSaveTime < 500) {
       return
     }
-    
+
     try {
       const now = Date.now()
       console.log('[autosave]', now, '- writing to:', path)
-      
+
       // Save with short retry in case of concurrent writes
-      await window.electronAPI.writeFile(path, content)
-      
+      await window.electronAPI?.writeFile(path, content)
+
       state.lastSaveTime = now
       state.lastBoardContent = content
-      
+
       console.log('[autosave] success')
     } catch (e) {
       console.error('[autosave] failed for', path + ':', e)
@@ -90,12 +90,12 @@ function AppContent() {
       const board = parseBoardFromMd(text)
       const pathParts = name.split(isElectron ? /[\\/]/ : '/')
       board.name = pathParts[pathParts.length - 1].replace(/\.md$/i, '')
-      
+
       // Track the file path in Electron for autosave
       if (isElectron && window.electronAPI) {
         board.savedPath = name
       }
-      
+
       setActiveBoardIndex(data.boards.length)
       store.addBoard(board)
     } catch (e) {
@@ -152,12 +152,15 @@ function AppContent() {
   }
 
   async function deleteBoard(index: number) {
-    const confirmed = await showConfirm({
-      title: 'Delete Board',
-      message: `Are you sure you want to delete "${data.boards[index].name}" with all contained columns and items? This action can not be undone.`,
-      confirmLabel: 'Delete',
-    })
-    if (!confirmed) return
+    const shouldConfirm = data.boards[index].columns.length > 0 && !data.boards[index].savedPath
+    if (shouldConfirm) {
+      const confirmed = await showConfirm({
+        title: 'Delete Board',
+        message: `Are you sure you want to delete "${data.boards[index].name}" with all contained columns and items? This action can not be undone.`,
+        confirmLabel: 'Delete',
+      })
+      if (!confirmed) return
+    }
     const nextIndex = store.deleteBoard(index)
     if (nextIndex !== null) setActiveBoardIndex(nextIndex)
   }
