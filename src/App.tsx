@@ -10,6 +10,7 @@ declare global {
     electronAPI?: {
       openFileDialog: () => Promise<string | null>
       readFile: (path: string) => Promise<string>
+      writeFile: (path: string, content: string) => Promise<boolean>
       onFileOpened: (callback: (data: { path: string }) => void) => void
     }
   }
@@ -27,7 +28,6 @@ function AppContent() {
   const [data, setData] = useState<KanbanData>(() => store.getState())
   const [activeBoardIndex, setActiveBoardIndex] = useState<number>(0)
   const importInputRef = useRef<HTMLInputElement>(null)
-
   const isElectron = typeof window !== 'undefined' && window.electronAPI
 
   useEffect(() => {
@@ -47,12 +47,55 @@ function AppContent() {
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
   const activeBoard = data.boards[activeBoardIndex] ?? null
+  
+  // Autosave debounce: throttle writes to same file to max once per second
+  const autosaveState = useRef<{lastSaveTime: number; lastBoardContent: string}>({
+    lastSaveTime: 0,
+    lastBoardContent: ''
+  })
+
+  useEffect(() => {
+    if (!isElectron || !activeBoard?.savedPath) return
+    
+    // Format current content
+    const content = formatBoardAsMd(activeBoard)
+    
+    throttleAutosave(activeBoard.savedPath, content, autosaveState.current)
+  })
+
+  async function throttleAutosave(path: string, content: string, state: typeof autosaveState.current) {
+    // If this exact content was already saved recently, skip
+    if (state.lastBoardContent === content && Date.now() - state.lastSaveTime < 500) {
+      return
+    }
+    
+    try {
+      const now = Date.now()
+      console.log('[autosave]', now, '- writing to:', path)
+      
+      // Save with short retry in case of concurrent writes
+      await window.electronAPI.writeFile(path, content)
+      
+      state.lastSaveTime = now
+      state.lastBoardContent = content
+      
+      console.log('[autosave] success')
+    } catch (e) {
+      console.error('[autosave] failed for', path + ':', e)
+    }
+  }
 
   function handleImport(name: string, text: string) {
     try {
       const board = parseBoardFromMd(text)
       const pathParts = name.split(isElectron ? /[\\/]/ : '/')
       board.name = pathParts[pathParts.length - 1].replace(/\.md$/i, '')
+      
+      // Track the file path in Electron for autosave
+      if (isElectron && window.electronAPI) {
+        board.savedPath = name
+      }
+      
       setActiveBoardIndex(data.boards.length)
       store.addBoard(board)
     } catch (e) {

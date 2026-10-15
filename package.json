@@ -5,7 +5,8 @@
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
-    "start": "node electron/run-dev.cjs",
+    "start": "vite",
+    "dev": "node electron/run-dev.cjs",
     "dist": "vite build && electron-builder"
   },
   "build": {
@@ -23,7 +24,7 @@
       "target": [
         "nsis"
       ],
-      "icon": "build/icon.png"
+      "icon": "public/Icon.png"
     }
   },
   "dependencies": {

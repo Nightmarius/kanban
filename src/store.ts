@@ -36,6 +36,10 @@ export function getState(): KanbanData {
   return structuredClone(state)
 }
 
+export function getActiveState(): KanbanData {
+  return state
+}
+
 export function exportAsJSON(): string {
   return JSON.stringify(state, null, 2)
 }

@@ -7,6 +7,7 @@ export interface ColumnType {
 export interface BoardType {
   name: string
   columns: ColumnType[]
+  savedPath?: string
 }
 
 export interface KanbanData {
