@@ -102,7 +102,7 @@ export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemInd
         ))}
       </div>
 
-      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer' onClick={() => store.addItem(boardIndex, colIndex)}>
+      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer hover:bg-card' onClick={() => store.addItem(boardIndex, colIndex)}>
         Add item
       </button>
     </div>
