@@ -13,7 +13,7 @@ interface ItemProps {
 export function Item({ item, itemIndex, colIndex, boardIndex, done }: ItemProps) {
   return (
     <div
-      className={'rounded-sm px-3 py-2 flex items-center gap-2 drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
+      className={'rounded-sm px-2 py-1 flex items-center gap-1 drop-target ' + (done ? 'bg-accent' : 'bg-item cursor-grab')}
       draggable={!done}
       onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ colIndex, itemIndex }))}
     >
