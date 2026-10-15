@@ -2,11 +2,29 @@
   "name": "kanban",
   "private": true,
   "version": "0.0.1",
+  "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "node electron/run-dev.cjs",
+    "dist": "vite build && electron-builder"
+  },
+  "build": {
+    "asar": false,
+    "appId": "com.nightmarius.kanban",
+    "productName": "Kanban",
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    }
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -18,6 +36,8 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.6.1",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
     "vite": "^7.1.0"
