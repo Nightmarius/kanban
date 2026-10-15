@@ -5,6 +5,16 @@ import { Board } from './Board'
 import { ConfirmProvider, showConfirm } from './ConfirmModal'
 import { Button } from './Button'
 
+declare global {
+  interface Window {
+    electronAPI?: {
+      openFileDialog: () => Promise<string | null>
+      readFile: (path: string) => Promise<string>
+      onFileOpened: (callback: (data: { path: string }) => void) => void
+    }
+  }
+}
+
 export function App() {
   return (
     <ConfirmProvider>
@@ -18,6 +28,22 @@ function AppContent() {
   const [activeBoardIndex, setActiveBoardIndex] = useState<number>(0)
   const importInputRef = useRef<HTMLInputElement>(null)
 
+  const isElectron = typeof window !== 'undefined' && window.electronAPI
+
+  useEffect(() => {
+    if (isElectron) {
+      window.electronAPI.onFileOpened(async (fileData) => {
+        try {
+          const content = await window.electronAPI.readFile(fileData.path)
+          handleImport(fileData.path, content)
+        } catch (e) {
+          console.error(e)
+          alert('Failed to read file.')
+        }
+      })
+    }
+  }, [isElectron])
+
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
   const activeBoard = data.boards[activeBoardIndex] ?? null
@@ -25,7 +51,8 @@ function AppContent() {
   function handleImport(name: string, text: string) {
     try {
       const board = parseBoardFromMd(text)
-      board.name = name.slice(0, -3)
+      const pathParts = name.split(isElectron ? /[\\/]/ : '/')
+      board.name = pathParts[pathParts.length - 1].replace(/\.md$/i, '')
       setActiveBoardIndex(data.boards.length)
       store.addBoard(board)
     } catch (e) {
@@ -92,8 +119,21 @@ function AppContent() {
     if (nextIndex !== null) setActiveBoardIndex(nextIndex)
   }
 
-  function handleNewImportFile() {
-    importInputRef.current?.click()
+  async function handleNewImportFile() {
+    if (isElectron && window.electronAPI) {
+      const filePath = await window.electronAPI.openFileDialog()
+      if (filePath) {
+        try {
+          const content = await window.electronAPI.readFile(filePath)
+          handleImport(filePath, content)
+        } catch (e) {
+          console.error(e)
+          alert('Failed to read file.')
+        }
+      }
+    } else {
+      importInputRef.current?.click()
+    }
   }
 
   return (
