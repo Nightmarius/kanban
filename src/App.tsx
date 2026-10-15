@@ -29,61 +29,43 @@ function AppContent() {
   const [activeBoardIndex, setActiveBoardIndex] = useState<number>(0)
   const importInputRef = useRef<HTMLInputElement>(null)
   const isElectron = typeof window !== 'undefined' && window.electronAPI
-
-  useEffect(() => {
-    if (isElectron) {
-      window.electronAPI?.onFileOpened(async (fileData) => {
-        try {
-          const content = await window.electronAPI?.readFile(fileData.path)
-          if (content) handleImport(fileData.path, content)
-        } catch (e) {
-          console.error(e)
-          alert('Failed to read file.')
-        }
-      })
-    }
-  }, [isElectron])
+  const initialized = useRef(false)
 
   useEffect(() => store.subscribe((s) => setData(s)), [])
 
   const activeBoard = data.boards[activeBoardIndex] ?? null
 
-  // Autosave debounce: throttle writes to same file to max once per second
-  const autosaveState = useRef<{ lastSaveTime: number; lastBoardContent: string }>({
-    lastSaveTime: 0,
-    lastBoardContent: '',
-  })
+  useEffect(() => {
+    if (isElectron && !initialized.current && window.electronAPI) {
+      initialized.current = true
+      for (let i = 0; i < data.boards.length; i++) {
+        const path = data.boards[i].savedPath
+        if (path) {
+          try {
+            window.electronAPI?.readFile(path).then((content) => {
+              const loaded = parseBoardFromMd(content)
+              setData((prev) => ({
+                ...prev,
+                boards: prev.boards.map((b, index) => (i === index ? { ...b, columns: loaded.columns } : b)),
+              }))
+            })
+          } catch (e) {
+            console.error(`Failed to reload board from ${path}:`, e)
+          }
+        }
+      }
+    }
+  }, [isElectron])
 
   useEffect(() => {
-    if (!isElectron || !activeBoard?.savedPath) return
-
-    // Format current content
+    if (!isElectron || !activeBoard?.savedPath || !initialized.current) return
     const content = formatBoardAsMd(activeBoard)
+    window.electronAPI?.writeFile(activeBoard.savedPath, content)
+  }, [isElectron, activeBoard])
 
-    throttleAutosave(activeBoard.savedPath, content, autosaveState.current)
-  })
-
-  async function throttleAutosave(path: string, content: string, state: typeof autosaveState.current) {
-    // If this exact content was already saved recently, skip
-    if (state.lastBoardContent === content && Date.now() - state.lastSaveTime < 500) {
-      return
-    }
-
-    try {
-      const now = Date.now()
-      console.log('[autosave]', now, '- writing to:', path)
-
-      // Save with short retry in case of concurrent writes
-      await window.electronAPI?.writeFile(path, content)
-
-      state.lastSaveTime = now
-      state.lastBoardContent = content
-
-      console.log('[autosave] success')
-    } catch (e) {
-      console.error('[autosave] failed for', path + ':', e)
-    }
-  }
+  useEffect(() => {
+    console.log('data ' + data.boards[0].name)
+  }, [data])
 
   function handleImport(name: string, text: string) {
     try {
@@ -152,7 +134,7 @@ function AppContent() {
   }
 
   async function deleteBoard(index: number) {
-    const shouldConfirm = data.boards[index].columns.length > 0 && !data.boards[index].savedPath
+    const shouldConfirm = data.boards[index].columns.length > 0 || !data.boards[index].savedPath
     if (shouldConfirm) {
       const confirmed = await showConfirm({
         title: 'Delete Board',
