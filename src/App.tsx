@@ -17,14 +17,6 @@ declare global {
 }
 
 export function App() {
-  return (
-    <ConfirmProvider>
-      <AppContent />
-    </ConfirmProvider>
-  )
-}
-
-function AppContent() {
   const [data, setData] = useState<KanbanData>(() => store.getState())
   const [activeBoardIndex, setActiveBoardIndex] = useState<number>(0)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -62,10 +54,6 @@ function AppContent() {
     const content = formatBoardAsMd(activeBoard)
     window.electronAPI?.writeFile(activeBoard.savedPath, content)
   }, [isElectron, activeBoard])
-
-  useEffect(() => {
-    console.log('data ' + data.boards[0].name)
-  }, [data])
 
   function handleImport(name: string, text: string) {
     try {
@@ -165,38 +153,40 @@ function AppContent() {
   }
 
   return (
-    <div className='relative bg-bg main-content'>
-      {activeBoard ? (
-        <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
-      ) : (
-        <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
-          <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
-          <div className='flex gap-2'>
-            <Button text='Import .md' type='Outline' onClick={handleNewImportFile} />
-            <Button
-              text='Add New Board'
-              onClick={() => {
-                setActiveBoardIndex(data.boards.length)
-                store.addBoard()
-              }}
-            />
+    <ConfirmProvider>
+      <div className='relative bg-bg main-content'>
+        {activeBoard ? (
+          <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
+        ) : (
+          <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
+            <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
+            <div className='flex gap-2'>
+              <Button text='Import .md' type='Outline' onClick={handleNewImportFile} />
+              <Button
+                text='Add New Board'
+                onClick={() => {
+                  setActiveBoardIndex(data.boards.length)
+                  store.addBoard()
+                }}
+              />
+            </div>
           </div>
-        </div>
-      )}
-      <input
-        ref={importInputRef}
-        type='file'
-        accept='.md'
-        className='hidden'
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (!file) return
-          const reader = new FileReader()
-          reader.onload = () => handleImport(file.name, reader.result as string)
-          reader.readAsText(file)
-          e.target.value = ''
-        }}
-      />
-    </div>
+        )}
+        <input
+          ref={importInputRef}
+          type='file'
+          accept='.md'
+          className='hidden'
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            const reader = new FileReader()
+            reader.onload = () => handleImport(file.name, reader.result as string)
+            reader.readAsText(file)
+            e.target.value = ''
+          }}
+        />
+      </div>
+    </ConfirmProvider>
   )
 }

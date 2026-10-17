@@ -2,4 +2,4 @@ node_modules/
 dist/
 build/
 *.log
-release/
+.DS_Store
