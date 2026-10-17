@@ -33,12 +33,14 @@ You can also import files with this format.
 With node.js and npm
 
 ```
+npm i
 npm start
 ```
 
 or bun
 
 ```
+bun i
 bun start
 ```
 
@@ -47,11 +49,13 @@ bun start
 With node.js and npm
 
 ```
+npm i
 npm run dist
 ```
 
 or bun
 
 ```
+bun i
 bun run dist
 ```

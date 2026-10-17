@@ -2,6 +2,11 @@
   "name": "kanban",
   "private": true,
   "version": "1.0.0",
+  "description": "A Kanban board application",
+  "author": {
+    "name": "Nightmarius",
+    "email": "m@nightmarius.com"
+  },
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -18,13 +23,21 @@
       "electron/**/*"
     ],
     "directories": {
-      "output": "release"
+      "output": "dist"
     },
     "win": {
       "target": [
         "nsis"
       ],
       "icon": "public/Icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "public/Icon.png",
+      "category": "public.app-category.productivity"
     }
   },
   "dependencies": {
