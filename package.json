@@ -19,11 +19,11 @@
     "appId": "com.nightmarius.kanban",
     "productName": "Kanban",
     "files": [
-      "dist/**/*",
+      "dist/web/**/*",
       "electron/**/*"
     ],
     "directories": {
-      "output": "dist"
+      "output": "dist/release"
     },
     "win": {
       "target": [

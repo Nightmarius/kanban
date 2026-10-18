@@ -28,7 +28,7 @@ function createWindow() {
   })
 
   if (app.isPackaged) {
-    const indexPath = url.pathToFileURL(path.join(process.resourcesPath, 'app', 'dist', 'index.html')).href
+    const indexPath = url.pathToFileURL(path.join(process.resourcesPath, 'app', 'dist', 'web', 'index.html')).href
     mainWindow.loadURL(indexPath)
   } else {
     mainWindow.loadURL('http://localhost:8787')
