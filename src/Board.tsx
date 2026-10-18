@@ -24,7 +24,7 @@ export function Board({ boardIndex, boards, onDelete, onSave, onActivate, onImpo
     <div className='flex flex-col h-full'>
       <div className='flex items-center gap-2 p-3 border-b-2 border-card'>
         <BoardPicker boards={boards} activeBoardIndex={boardIndex} onActivate={onActivate} onImport={onImport} onDelete={onDelete} />
-        <EditableText value={board.name} onSave={(name) => store.renameBoard(boardIndex, name)} className='text-2xl font-bold px-2 py-1 focus:bg-card' />
+        <EditableText value={board.name} onSave={(name) => store.renameBoard(boardIndex, name)} className='text-2xl font-bold px-2 max-h-16' />
         {!board.savedPath && <Button text='Save' type='Outline' onClick={onSave} />}
         <DeleteButton onClick={() => onDelete(boardIndex)} />
       </div>

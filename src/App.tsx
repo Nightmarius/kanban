@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import * as store from './store'
 import type { BoardType, KanbanData } from './types'
 import { Board } from './Board'
-import { ConfirmProvider, showConfirm } from './ConfirmModal'
+import { ConfirmModal, showConfirm } from './ConfirmModal'
 import { Button } from './Button'
 
 declare global {
@@ -119,7 +119,7 @@ export function App() {
   }
 
   async function deleteBoard(index: number) {
-    const shouldConfirm = data.boards[index].columns.length > 0 || !data.boards[index].savedPath
+    const shouldConfirm = data.boards[index].columns.length > 0 && !data.boards[index].savedPath
     if (shouldConfirm) {
       const confirmed = await showConfirm({
         title: 'Delete Board',
@@ -150,40 +150,39 @@ export function App() {
   }
 
   return (
-    <ConfirmProvider>
-      <div className='bg-bg'>
-        {activeBoard ? (
-          <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
-        ) : (
-          <div className='flex flex-col items-center justify-center h-[60vh] gap-6'>
-            <h2 className='text-text text-xl font-bold'>No boards yet</h2>
-            <div className='flex gap-3'>
-              <Button text='Import .md' type='Outline' onClick={handleNewImportFile} />
-              <Button
-                text='Add New Board'
-                onClick={() => {
-                  setActiveBoardIndex(data.boards.length)
-                  store.addBoard()
-                }}
-              />
-            </div>
+    <div className='bg-bg text-text'>
+      {activeBoard ? (
+        <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
+      ) : (
+        <div className='flex flex-col items-center justify-center h-[60vh] gap-6'>
+          <h2 className='text-xl font-bold'>No boards yet</h2>
+          <div className='flex gap-3'>
+            <Button text='Import .md' type='Outline' onClick={handleNewImportFile} />
+            <Button
+              text='Add New Board'
+              onClick={() => {
+                setActiveBoardIndex(data.boards.length)
+                store.addBoard()
+              }}
+            />
           </div>
-        )}
-        <input
-          ref={importInputRef}
-          type='file'
-          accept='.md'
-          className='hidden'
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            const reader = new FileReader()
-            reader.onload = () => handleImport(file.name, reader.result as string)
-            reader.readAsText(file)
-            e.target.value = ''
-          }}
-        />
-      </div>
-    </ConfirmProvider>
+        </div>
+      )}
+      <input
+        ref={importInputRef}
+        type='file'
+        accept='.md'
+        className='hidden'
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          const reader = new FileReader()
+          reader.onload = () => handleImport(file.name, reader.result as string)
+          reader.readAsText(file)
+          e.target.value = ''
+        }}
+      />
+      <ConfirmModal />
+    </div>
   )
 }

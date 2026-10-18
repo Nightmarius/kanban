@@ -4,7 +4,7 @@ export function Button({ text, onClick, type = 'Default' }: { text: string; onCl
   if (type === 'Icon') classes = 'size-6 hover:text-accent'
 
   return (
-    <button className={'rounded text-text text-nowrap cursor-pointer ' + classes} onClick={onClick}>
+    <button className={'rounded text-nowrap cursor-pointer ' + classes} onClick={onClick}>
       {text}
     </button>
   )

@@ -20,7 +20,7 @@ export function EditableText({ value, onSave, onCancel, className = '' }: Editab
       ref={ref as React.RefObject<HTMLTextAreaElement>}
       value={text}
       spellCheck='false'
-      className={`w-full field-sizing-content resize-none overflow-hidden outline-none rounded text-text ${className}`}
+      className={`w-full field-sizing-content resize-none overflow-hidden outline-none ${className}`}
       onBlur={() => {
         if (text !== value) onSave(text)
         else onCancel?.()

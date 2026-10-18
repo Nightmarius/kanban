@@ -40,25 +40,13 @@ export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemInd
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
-    const dragData = e.dataTransfer.getData('text/plain')
-    let sourceColIndex = -1
-    let sourceItemIndex = -1
-    if (dragData) {
-      try {
-        const { colIndex, itemIndex } = JSON.parse(dragData)
-        sourceColIndex = colIndex
-        sourceItemIndex = itemIndex
-      } catch {
-        // ignore parse errors
-      }
-    }
-
-    const targetIndex = dropItemIndex ?? column.items.length
-
-    if (sourceColIndex >= 0 && sourceItemIndex >= 0) {
-      store.moveItem(boardIndex, sourceColIndex, colIndex, sourceItemIndex, targetIndex)
-    }
     onClearTarget()
+    const dragData = e.dataTransfer.getData('text/json')
+    if (!dragData) return
+    const { colIndex: srcColIndex, itemIndex: srcItemIndex } = JSON.parse(dragData)
+    if (srcColIndex < 0 || srcItemIndex < 0) return
+    const targetIndex = dropItemIndex ?? column.items.length
+    store.moveItem(boardIndex, srcColIndex, colIndex, srcItemIndex, targetIndex)
   }
 
   function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
@@ -83,8 +71,8 @@ export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemInd
   const showIndicator = isTarget && dropItemIndex !== null && dropItemIndex >= column.done
 
   return (
-    <div className='bg-card rounded-lg flex flex-col w-64 shrink-0'>
-      <div className='flex p-4 pb-2 rounded-t-lg bg-card border-b-2 border-item cursor-grab'>
+    <div className='bg-card rounded-lg flex flex-col w-64'>
+      <div className='flex p-4 pb-2 rounded-lg bg-card border-b-2 border-item'>
         <EditableText
           value={column.name}
           onSave={(name) => {
@@ -95,18 +83,18 @@ export function Column({ column, boardIndex, colIndex, dropColIndex, dropItemInd
         <DeleteButton onClick={onDelete} />
       </div>
 
-      <div className='flex-1 min-h-7 overflow-y-auto p-2 flex flex-col gap-1.5' onDragOver={handleDragOver} onDrop={handleDrop} onDragLeave={handleDragLeave}>
-        {showIndicator && dropItemIndex === 0 && <div className='h-1 rounded bg-accent z-20 pointer-events-none' />}
+      <div className='flex flex-col gap-1 min-h-7 p-2' onDragOver={handleDragOver} onDrop={handleDrop} onDragLeave={handleDragLeave}>
+        {showIndicator && dropItemIndex === 0 && <div className='h-1 my-3 rounded bg-accent' />}
 
         {column.items.map((item, index) => (
-          <div key={'item-' + index}>
-            <Item item={item} boardIndex={boardIndex} colIndex={colIndex} itemIndex={index} done={column.done > index} />
-            {showIndicator && dropItemIndex === index + 1 && <div className='mt-2 h-1 rounded bg-accent z-20 pointer-events-none' />}
-          </div>
+          <>
+            <Item key={'item-' + index} item={item} boardIndex={boardIndex} colIndex={colIndex} itemIndex={index} done={column.done > index} />
+            {showIndicator && dropItemIndex === index + 1 && <div key='indicator' className='h-1 my-3 rounded bg-accent' />}
+          </>
         ))}
       </div>
 
-      <button className='px-4 py-2 rounded-b-lg bg-accent text-text cursor-pointer hover:bg-card' onClick={() => store.addItem(boardIndex, colIndex)}>
+      <button className='p-2 rounded-b-lg bg-accent cursor-pointer hover:bg-card' onClick={() => store.addItem(boardIndex, colIndex)}>
         Add item
       </button>
     </div>
