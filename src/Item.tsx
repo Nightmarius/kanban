@@ -22,7 +22,7 @@ export function Item({ item, itemIndex, colIndex, boardIndex, done }: ItemProps)
         onSave={(text) => {
           if (text.trim()) store.updateItem(boardIndex, colIndex, itemIndex, text)
         }}
-        className='text-sm word-break-break-word'
+        className='text-sm wrap-break-word'
       />
       {!done && colIndex === 0 && <Button text='✓' type='Icon' onClick={() => store.finishItem(boardIndex, colIndex, itemIndex)} />}
       <DeleteButton onClick={() => store.deleteItem(boardIndex, colIndex, itemIndex)} />

@@ -35,11 +35,8 @@ export function App() {
         if (path) {
           try {
             window.electronAPI?.readFile(path).then((content) => {
-              const loaded = parseBoardFromMd(content)
-              setData((prev) => ({
-                ...prev,
-                boards: prev.boards.map((b, index) => (i === index ? { ...b, columns: loaded.columns } : b)),
-              }))
+              const board = parseBoardFromMd(content)
+              store.updateColumns(board.columns, i)
             })
           } catch (e) {
             console.error(`Failed to reload board from ${path}:`, e)
@@ -154,13 +151,13 @@ export function App() {
 
   return (
     <ConfirmProvider>
-      <div className='relative bg-bg main-content'>
+      <div className='bg-bg'>
         {activeBoard ? (
           <Board boards={data.boards} boardIndex={activeBoardIndex} onSave={handleSave} onImport={handleNewImportFile} onActivate={setActiveBoardIndex} onDelete={deleteBoard} />
         ) : (
-          <div className='flex flex-col items-center justify-center h-[60vh] gap-4'>
-            <h2 className='text-text m-0 text-3 font-bold'>No boards yet</h2>
-            <div className='flex gap-2'>
+          <div className='flex flex-col items-center justify-center h-[60vh] gap-6'>
+            <h2 className='text-text text-xl font-bold'>No boards yet</h2>
+            <div className='flex gap-3'>
               <Button text='Import .md' type='Outline' onClick={handleNewImportFile} />
               <Button
                 text='Add New Board'

@@ -1,5 +1,5 @@
 import defaultData from './appData.json' with { type: 'json' }
-import type { KanbanData, BoardType } from './types'
+import type { KanbanData, BoardType, ColumnType } from './types'
 
 const STORAGE_KEY = 'data'
 
@@ -45,10 +45,17 @@ export function exportAsJSON(): string {
 }
 
 export function addBoard(board?: BoardType) {
-  state.boards.push(board ?? {
-    name: 'Untitled',
-    columns: [],
-  })
+  state.boards.push(
+    board ?? {
+      name: 'Untitled',
+      columns: [],
+    },
+  )
+  notify()
+}
+
+export function updateColumns(columns: ColumnType[], boardIndex: number) {
+  state.boards[boardIndex].columns = columns
   notify()
 }
 
@@ -102,7 +109,7 @@ export function moveItem(boardIndex: number, fromColIndex: number, toColIndex: n
   const src = board.columns[fromColIndex]
   const dst = board.columns[toColIndex]
   if (!src || !dst || dst.done > toItemIndex) return
-  if(fromColIndex === toColIndex && fromItemIndex < toItemIndex) toItemIndex--;
+  if (fromColIndex === toColIndex && fromItemIndex < toItemIndex) toItemIndex--
   const item = src.items[fromItemIndex]
   src.items.splice(fromItemIndex, 1)
   dst.items.splice(toItemIndex, 0, item)
@@ -127,11 +134,11 @@ export function finishItem(boardIndex: number, colIndex: number, itemIndex: numb
   const board = state.boards[boardIndex]
   if (!board || !board.columns[colIndex]) return
   const col = board.columns[colIndex]
-  if (col.done++ < itemIndex) {
-    moveItem(boardIndex, colIndex, colIndex, itemIndex, col.done - 1)
-  } else {
-    notify()
+  if (col.done < itemIndex) {
+    moveItem(boardIndex, colIndex, colIndex, itemIndex, col.done)
   }
+  col.done++
+  notify()
 }
 
 export function deleteItem(boardIndex: number, colIndex: number, itemIndex: number) {
